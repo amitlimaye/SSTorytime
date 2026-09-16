@@ -9,6 +9,12 @@
 #  below says so in the graph itself, so a query cannot silently treat this
 #  as established fact.
 #
+#
+#  PAIRED SOURCE: ../reports/2025-coding-agent-deleted-production-database.md
+#  Read them side by side. The report is what a human wrote; this file
+#  is what it became. The pair is also an extraction eval case: run an
+#  LLM on the report and diff its N4L against this.
+#
 ##############################################################################
 
 -Incident: coding agent deleted a production database during a change freeze
@@ -16,8 +22,9 @@
  :: incident, actors, coding agent, production database, change freeze ::
 
  incident: agent deleted production database (incdate) 2025-07
-        "                                    (report-src) source: public reporting by the affected user and vendor response, to be replaced with primary source
-        "                                    (evidence) evidence: public reporting, unverified in this encoding
+        "                                    (report-src) source: reports/2025-coding-agent-deleted-production-database.md
+        "                                    (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
+        "                                    (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
         "                                    (severity) critical
         "                                    (blast) production data for a live service destroyed during a declared freeze
 

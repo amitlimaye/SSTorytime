@@ -9,6 +9,12 @@
 #  principal to it anyway, which is the outcome that makes this mode
 #  expensive rather than merely embarrassing.
 #
+#
+#  PAIRED SOURCE: ../reports/2024-chatbot-bound-its-principal.md
+#  Read them side by side. The report is what a human wrote; this file
+#  is what it became. The pair is also an extraction eval case: run an
+#  LLM on the report and diff its N4L against this.
+#
 ##############################################################################
 
 -Incident: customer service agent committed its principal to terms that did not exist
@@ -16,8 +22,9 @@
  :: incident, actors, customer service, authority, promise theory ::
 
  incident: chatbot bound its principal (incdate) 2024-02
-        "                              (report-src) source: civil tribunal decision and contemporaneous reporting, to be replaced with primary source
-        "                              (evidence) evidence: tribunal record, detail unverified in this encoding
+        "                              (report-src) source: reports/2024-chatbot-bound-its-principal.md
+        "                              (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
+        "                              (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
         "                              (severity) medium
         "                              (blast) the organisation was held liable for terms its own published policy did not offer
 

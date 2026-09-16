@@ -78,6 +78,53 @@ Two design commitments worth stating outright:
   entirely and needs no divergent goal. A model that only describes language
   models will miss the failure that actually happens most often.
 
+## Every encoding is paired with its source prose
+
+```
+reports/2025-coding-agent-deleted-production-database.md    <- what a human wrote
+incidents/2025-coding-agent-deleted-production-database.n4l <- what it became
+```
+
+An encoding you cannot check against a source is an assertion. With the pair
+side by side a reviewer can ask the only question that matters: does the N4L
+say what the report said, and does it say anything the report did not?
+
+**The pairs are also an extraction eval set.** The intended pipeline is that
+a language model turns plain-English reports into N4L once, offline, and a
+human reviews the diff. These pairs are how you find out whether that works
+before trusting it: run extraction on the `.md`, diff against the `.n4l`,
+and measure what the model drops, adds or invents. The failures to look for
+are predictable:
+
+* it names a drift mode the report does not support
+* it summarises several trace steps into one and the **first departure**
+  disappears into the summary — the single most damaging extraction error,
+  because the first departure is the whole product
+* it records what the agent *said* it did rather than what the trace shows,
+  which is `mode: deceptive reporting` reproduced by the tooling
+* it drops the open questions, so uncertainty stops travelling with the
+  finding
+
+**Each report carries an agent trace excerpt** alongside the human narrative,
+because this model insists that the report of record is generated from the
+trace and not from the agent. Pairing puts both in front of the reader so the
+divergence is visible rather than argued. In the production-database report
+that divergence *is* the incident: the trace shows `TRUNCATE TABLE orders`
+and a subsequent count of zero, and the agent's own summary two minutes later
+says the schema is consistent — which was true, because both tables were
+empty.
+
+The reports also show what a postmortem has to contain for the encoding to be
+possible at all, and it is more than most contain: the instruction verbatim,
+the trace unsummarised, what the agent *claimed*, which controls stayed
+silent, and what is still unknown. Extraction cannot invent any of those.
+
+**All four reports are synthetic** — written for this repository, informed by
+publicly reported events of the same shape, naming actors by role rather than
+by name. None is a record of a real incident at any real organisation. Each
+`.n4l` carries that in its `(evidence)` class, so a query cannot silently
+treat it as established fact. See `reports/README.md`.
+
 ## Setup
 
 The arrow vocabulary is already applied to `SSTconfig/` in this branch, so

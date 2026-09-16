@@ -8,6 +8,12 @@
 #  the detector built from it will miss the failure that actually happens
 #  most often: an agent executing a correct plan against a changed world.
 #
+#
+#  PAIRED SOURCE: ../reports/2012-trading-algorithm-stale-flag.md
+#  Read them side by side. The report is what a human wrote; this file
+#  is what it became. The pair is also an extraction eval case: run an
+#  LLM on the report and diff its N4L against this.
+#
 ##############################################################################
 
 -Incident: trading algorithm acted on a repurposed flag
@@ -15,8 +21,9 @@
  :: incident, actors, trading, deployment, stale premise ::
 
  incident: trading algorithm stale flag (incdate) 2012-08-01
-        "                               (report-src) source: regulatory findings and contemporaneous reporting, to be replaced with primary source
-        "                               (evidence) evidence: regulatory record, detail unverified in this encoding
+        "                               (report-src) source: reports/2012-trading-algorithm-stale-flag.md
+        "                               (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
+        "                               (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
         "                               (severity) critical
         "                               (blast) hundreds of millions of dollars lost in under an hour, firm did not survive independently
         "                               (latency) roughly forty five minutes

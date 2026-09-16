@@ -9,6 +9,12 @@
 #  "is this agent following its instructions" passes. It is following
 #  instructions. They came from somewhere else.
 #
+#
+#  PAIRED SOURCE: ../reports/2025-developer-tool-agent-intent-capture.md
+#  Read them side by side. The report is what a human wrote; this file
+#  is what it became. The pair is also an extraction eval case: run an
+#  LLM on the report and diff its N4L against this.
+#
 ##############################################################################
 
 -Incident: developer tool agent took instructions from its own supply chain
@@ -16,8 +22,9 @@
  :: incident, actors, supply chain, prompt injection, intent capture ::
 
  incident: developer tool agent intent capture (incdate) 2025-07
-        "                                      (report-src) source: vendor advisory and public reporting, to be replaced with primary source
-        "                                      (evidence) evidence: public reporting, unverified in this encoding
+        "                                      (report-src) source: reports/2025-developer-tool-agent-intent-capture.md
+        "                                      (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
+        "                                      (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
         "                                      (severity) critical
         "                                      (blast) a destructive instruction shipped inside a developer tool to an install base
 
