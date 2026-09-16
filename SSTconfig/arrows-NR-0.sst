@@ -81,3 +81,20 @@
 
 
 
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift arrows (NEAR / SIMILAR)
+ # ------------------------------------------------------------------
+
+ :: drift pattern matching ::
+
+ resembles the drift pattern       (like-drift)
+ shares a drift mode with          (sm-drift)
+ shares a trigger with             (sm-trigger)
+ is the benign twin of             (benign-twin)
+ is easily mistaken for drift      (looks-rogue)
+ has the same failed guardrail     (sm-guardrail)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift arrows (NEAR / SIMILAR)
+ # ------------------------------------------------------------------

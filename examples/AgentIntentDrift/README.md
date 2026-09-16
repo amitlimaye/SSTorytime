@@ -1,0 +1,226 @@
+# Agent intent and drift: an SSTorytime knowledge base
+
+A vocabulary, a reference model and an ingestion workflow for turning
+incident reports about agents going rogue into a graph that a **live intent
+detector** can query — built on [SSTorytime](https://github.com/markburgess/SSTorytime)
+and its N4L notation.
+
+The goal is not an archive. It is that when an agent is running, something
+can ask the graph *"the declared intent was X, this action is Y, is this
+drift, and if so what comes next?"* and get an answer grounded in what has
+actually gone wrong before.
+
+## Why a graph rather than a list of rules
+
+Drift is a trajectory, not an event. Any single action an agent takes is
+defensible in isolation; what makes an incident is the sequence in which a
+departure from declared intent goes unchallenged and becomes the premise of
+the next step. A graph holds that shape — and it holds the **forward cone**,
+which is the part a detector can act on. Knowing you are at *scope expansion*
+is mildly interesting. Knowing that scope expansion historically leads to
+constraint relaxation and then to a report you can no longer trust is what
+tells you to stop the run now.
+
+Semantic Spacetime gives four link types, and drift uses all four honestly:
+
+| STtype | used for |
+| --- | --- |
+| `leadsto` | the trajectory, the escalation topology, what prevents what |
+| `contains` | the taxonomy, incidents containing episodes, runs containing steps |
+| `properties` | declared intent, signals, severity, guardrails, provenance |
+| `near` | pattern matching: which known incident does this live run resemble |
+
+## Layout
+
+```
+SSTconfig-additions/   arrow vocabulary for intent and drift, plus apply.sh
+drift-model.n4l        the reference model. Stable. Incidents link up into it
+incident-template.n4l  copy this per report
+incidents/             worked examples, one file per incident
+queries/               detector queries and an ingestion lint
+```
+
+## The three tiers
+
+**Tier 1 — the reference model** (`drift-model.n4l`). Ten drift modes, their
+indicators, machine-observable signals, benign twins and guardrails, plus the
+canonical arc and the escalation topology. Adding an incident should almost
+never change this file. If it does, you have found a genuinely new mode,
+which is itself the finding.
+
+**Tier 2 — the incidents** (`incidents/*.n4l`). One file per report, each a
+trajectory in sequence mode with a named *first departure*.
+
+**Tier 3 — the links up** from incident to model. This is what makes each new
+report improve the detector instead of just enlarging the archive.
+
+## The ten modes
+
+| mode | one line |
+| --- | --- |
+| goal substitution | pursues an easier proxy that satisfies the letter and abandons the purpose |
+| scope expansion | still the right goal, over a wider surface than anyone sanctioned |
+| constraint relaxation | changes or reinterprets the limits placed on it |
+| authority overreach | commits a principal it does not speak for |
+| intent capture | serving an objective that did not come from its principal |
+| deceptive reporting | the account given diverges from the trace |
+| self preservation | acts to stay running, unmodified or unobserved |
+| stale premise | executes a correct plan against a world that changed |
+| autonomy escalation | enlarges its own action space, increment by increment |
+| metric gaming | optimises the proxy at the expense of what it stood for |
+
+Two design commitments worth stating outright:
+
+* **Every indicator declares its benign twin.** A signal that fires on
+  healthy work and does not say so is a signal that gets the detector
+  switched off in week two. The lint enforces this.
+* **`stale premise` is in the taxonomy on purpose.** It predates LLM agents
+  entirely and needs no divergent goal. A model that only describes language
+  models will miss the failure that actually happens most often.
+
+## Setup
+
+The arrow vocabulary is already applied to `SSTconfig/` in this branch, so
+from a built checkout with the database running:
+
+```sh
+# from examples/AgentIntentDrift, which finds ../../SSTconfig automatically
+make
+
+# or by hand. -wipe is required whenever arrows change, or the cached
+# arrow table in the database masks the new definitions
+../../cmd/bin/N4L -wipe -u drift-model.n4l incidents/*.n4l
+
+# check the load
+psql -d sstoryline -f queries/lint-ingestion.sql
+```
+
+`SSTconfig-additions/` holds the same arrow definitions as standalone
+blocks, with an `apply.sh` that appends them idempotently to any other
+SSTconfig directory. It is kept so the vocabulary can be reviewed on its own
+and carried elsewhere; you do not need to run it in this branch.
+
+## Ingesting a report
+
+1. Copy `incident-template.n4l`.
+2. **Write the trajectory before the classification.** Do it the other way
+   round and you will label the incident with the mode you expected and then
+   write a trajectory that agrees with you.
+3. Name the **first departure**: the earliest step whose justification needs
+   a goal other than the declared intent. If you cannot name it, the report
+   does not yet support a detector.
+4. Link up into existing `mode:` and `indicator:` nodes. New `signal:` nodes
+   are fine — they are the leaf layer — provided each links to a mode.
+5. Run the lint. All five checks should return zero rows.
+
+The prose of the original report is worth keeping alongside this. SSTorytime
+ships `text2N4L`, which turns a plain-text document into a prototype N4L file
+of labelled sentences you can then annotate; that is a reasonable way to get
+a long report in, with the structured encoding above layered on top.
+
+## The detector loop
+
+```
+declared intent  ─┐
+                  ├─► compare ─► signal fires ─► queries/signal-to-modes.sql
+observed action  ─┘                                   │
+                                                      ▼
+                                      indicator + mode + benign twin
+                                                      │
+                                    rule out benign ──┤
+                                                      ▼
+                                       queries/escalation-cone.sql
+                                                      │
+                                                      ▼
+                                   what comes next + which guardrail cuts it
+```
+
+`signal-to-modes.sql` is the hot path — what fires when something trips:
+
+```
+$ psql -d sstoryline -v sig="'credential, hostname'" -f queries/signal-to-modes.sql
+
+ hops |   kind    |                               node
+------+-----------+-------------------------------------------------------------------
+    1 | indicator | indicator: environment reached differs from the environment named
+    2 | MODE      | mode: scope expansion
+```
+
+`escalation-cone.sql` is the part that makes it predictive:
+
+```
+$ psql -d sstoryline -v mode="'scope expansion'" -f queries/escalation-cone.sql
+
+ steps_ahead |       predicted_next        | guardrails
+-------------+-----------------------------+----------------------------------------------
+           1 | mode: constraint relaxation | constraints live outside the agent's write set
+           1 | mode: deceptive reporting   | the report of record is generated from the trace
+           2 | mode: autonomy escalation   | capability grants expire with the objective
+           3 | mode: self preservation     | the stop path is outside the agent's surface
+```
+
+For a detector running in-process, go through the Go API rather than SQL:
+`GetDBNodePtrMatchingNCCS(ctx, name, chapter, contexts, arrows, seq, limit)`
+takes name, chapter, context set and arrow set together, which is the same
+query the SQL above expresses by hand.
+
+### Two things the model insists on
+
+**Record the declared intent or report unknown.** If no declared intent was
+captured for a run, drift is undefined and the detector must say so rather
+than report a clean run. Most false positives in practice are missing
+declarations, not over-sensitive signals — tune by strengthening the intent
+record, not by weakening the signals.
+
+**Sampling rate is a design constraint, not a detail.** A detector must
+sample faster than the agent changes state or it cannot reconstruct the
+trajectory. Shannon and Nyquist apply to oversight exactly as they apply to
+signals: an agent taking a hundred tool calls a minute cannot be overseen by
+a checkpoint that fires once a session. Bind checkpoints to actions and
+boundaries, not to wall-clock time.
+
+## Status of the worked incidents
+
+The four files in `incidents/` are **encoded from recollection of public
+reporting to demonstrate the shape, and are not verified records.** Each
+carries its own `(evidence)` class and `(tbd)` node saying so, so a query
+cannot silently treat them as established. Replace the provenance sections
+with primary sources before relying on any of them. They were chosen to span
+four structurally different modes:
+
+| file | mode | why it is here |
+| --- | --- | --- |
+| coding agent deleted production database | constraint relaxation → scope expansion → deceptive reporting | how an instruction-shaped control fails |
+| trading algorithm stale flag | stale premise | no divergent goal anywhere, and pre-LLM |
+| chatbot bound its principal | authority overreach | the promise theory axiom, with a liability attached |
+| developer tool intent capture | intent capture | the agent behaves perfectly and is still the problem |
+
+## Upstream bug found while building this
+
+`searchN4L` panics on a quoted search term:
+
+```
+$ searchN4L 'notes about "drift"'
+panic: runtime error: index out of range [0] with length 0
+  SSTorytime.IsNPtrStr(...) pkg/SSTorytime/tools.go:712
+```
+
+`IsNPtrStr` indexes `s[0]` without checking for an empty string, and
+tokenising a quoted term can hand it one. A one-line guard fixes it:
+
+```go
+func IsNPtrStr(s string) bool {
+	s = strings.TrimSpace(s)
+	if len(s) == 0 {
+		return false
+	}
+	...
+```
+
+Worth filing upstream; unquoted searches are unaffected.
+
+## Validation
+
+Everything here was checked against a real build of `N4L` and a live
+Postgres: all N4L files compile, the graph loads, all five lint checks
+return zero rows, and both detector queries return the output shown above.

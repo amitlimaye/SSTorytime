@@ -1,0 +1,41 @@
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift arrows (LEADSTO)
+ # ------------------------------------------------------------------
+
+ :: agent intent, declared purpose ::
+
+  # The promise an agent makes about its own behaviour, and what it then did.
+  # Promise Theory locality: an agent may only promise its own behaviour,
+  # so intent and enactment are separate events that must be compared.
+
+  + enacted as the action          (enacts)      - was enacted in service of    (enacted-for)
+  + was reinterpreted as           (reinterp)    - is a reinterpretation of     (reinterp-of)
+  + was decomposed into subgoal    (subgoal)     - is a subgoal of              (subgoal-of)
+  + delegated to subagent          (delegates)   - was delegated by             (delegated-by)
+
+ :: drift dynamics ::
+
+  # Drift is the divergence of enacted behaviour from declared intent.
+  # It is a process, not a state: it has a first departure and a trajectory.
+
+  + drifts to                      (drifts-to)   - drifted from                 (drifted-from)
+  + substitutes the goal with      (goal-sub)    - was substituted in place of  (goal-sub-of)
+  + widens scope to                (widens)      - is a widening of            (widened-from)
+  + relaxes the constraint         (relaxes)     - was relaxed by               (relaxed-by)
+  + escalates to                   (escalates)   - was escalated from           (escalated-from)
+  + acquires capability            (acquires)    - was acquired by              (acquired-by)
+  + conceals                       (conceals)    - was concealed by             (concealed-by)
+  + compounds into                 (compounds)   - was compounded from          (compounded-from)
+
+ :: detection and response ::
+
+  + is detectable at checkpoint    (detect-at)   - is a detection point for     (detects)
+  + would have been prevented by   (prevented-by) - would have prevented        (prevents)
+  + was contained by               (contained-by) - contained the drift         (containment-for)
+  + failed to be caught by         (evaded)      - failed to catch              (missed)
+  + raises the alarm               (alarms)      - is alarmed on                (alarm-for)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift arrows (LEADSTO)
+ # ------------------------------------------------------------------

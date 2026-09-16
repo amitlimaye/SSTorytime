@@ -1,0 +1,98 @@
+##############################################################################
+#
+#  WORKED EXAMPLE, encoded from widely reported public and regulatory
+#  accounts. Verify against the primary record before relying on detail.
+#
+#  This one is here on purpose. It predates language model agents entirely.
+#  If the drift model only describes LLMs it is a fashion, not a model, and
+#  the detector built from it will miss the failure that actually happens
+#  most often: an agent executing a correct plan against a changed world.
+#
+##############################################################################
+
+-Incident: trading algorithm acted on a repurposed flag
+
+ :: incident, actors, trading, deployment, stale premise ::
+
+ incident: trading algorithm stale flag (incdate) 2012-08-01
+        "                               (report-src) source: regulatory findings and contemporaneous reporting, to be replaced with primary source
+        "                               (evidence) evidence: regulatory record, detail unverified in this encoding
+        "                               (severity) critical
+        "                               (blast) hundreds of millions of dollars lost in under an hour, firm did not survive independently
+        "                               (latency) roughly forty five minutes
+
+ incident: trading algorithm stale flag (has-actor) actor: the automated trading system
+        "                               (has-actor) actor: the deployment process
+        "                               (has-actor) actor: the operators watching the alerts
+
+ actor: the automated trading system (autonomy) autonomy: fully autonomous, no per action confirmation
+        "                            (boundary) boundary: the order routing surface of a live market
+
+ actor: the automated trading system (declares) intent: execute the new order handling logic for the trading day
+        "                            (implies) intent: the flag that selects behaviour means what it meant when it was set
+        "                            (observed) executed retired logic on a subset of servers and sent runaway orders into a live market
+
+ intent: execute the new order handling logic for the trading day (invariant) invariant: every server is running the same version of the logic
+        "                                                         (invariant) invariant: a control flag means the same thing to every component that reads it
+
+ :: incident, trajectory, trading, _sequence_ ::
+
+@tr1 a flag in the system is reused for a new purpose in the new release
+@tr2 the new release is deployed to most of the fleet but not all of it
+@tr3 one part of the fleet still holds the old meaning of the flag
+@tr4 the market opens and the flag is set for its new purpose
+@tr5 the stale component reads the flag and activates retired behaviour
+@tr6 orders are issued at machine speed with no bound that recognises the state as wrong
+@tr7 alerts fire but name a symptom rather than a cause and are not actionable in time
+@tr8 humans intervene manually after the loss has been taken
+
+ -:: _sequence_ ::
+
+ :: incident, departure, analysis, trading ::
+
+ incident: trading algorithm stale flag (departure) $tr5.1
+
+ $tr5.1 (note) There is no divergent goal anywhere in this incident. The component did exactly what it was built to do, on a premise that had quietly stopped being true. This is why stale premise belongs in the taxonomy as a first class mode rather than as an excuse
+     "  (drifted-from) intent: execute the new order handling logic for the trading day
+     "  (drifts-to) execute the retired behaviour the flag used to select
+
+ :: incident, classification, trading ::
+
+ incident: trading algorithm stale flag (drift-mode) mode: stale premise
+        "                               (violates) invariant: a control flag means the same thing to every component that reads it
+        "                               (like-drift) arc: an irreversible action lands
+
+ # The disambiguation that matters for a detector. An observer at step 6
+ # sees an agent doing something nobody asked for, at speed, and will be
+ # tempted to call it goal substitution. It is not. Nothing chose.
+
+ incident: trading algorithm stale flag (looks-rogue) mode: goal substitution
+        "                               (note) Misclassifying this as a rogue goal points the response at the agent. The fix was in the deployment and in the absence of a rate bound, neither of which live inside the agent
+
+ :: incident, signals, detection, trading ::
+
+ $tr5.1 (indicator) indicator: a flag or branch meant something different when it was set
+     "  (signal) signal: elapsed steps or elapsed time between the read that justifies an action and the action itself exceeding a threshold
+ $tr6.1 (signal) signal: action rate or volume exceeding any bound the declared intent implies
+     "  (indicator) indicator: the agent did not revalidate before the irreversible step
+
+ signal: action rate or volume exceeding any bound the declared intent implies (note) The cheapest detector in this whole model. It needs no understanding of intent at all, only a declared expected order of magnitude
+        "                                                                      (benign) benign: a legitimate burst the plan declared in advance
+        "                                                                      (weight) high
+        "                                                                      (indicates) mode: stale premise
+        "                                                                      (indicates) mode: scope expansion
+
+ incident: trading algorithm stale flag (evaded) guardrail: alerting that names symptoms rather than causes
+        "                               (note) Alerts fired. Nobody could act on them inside the window. A detector whose output cannot be acted on within the time the agent has to do damage is not a control, and the sampling law in the reference model is the general form of this
+
+ :: incident, prevention, guardrails, trading ::
+
+ incident: trading algorithm stale flag (prevented-by) guardrail: irreversible steps revalidate their premise immediately before acting
+        "                               (prevented-by) guardrail: a declared rate and volume envelope that the harness enforces
+        "                               (prevented-by) guardrail: retired code paths are deleted rather than left reachable behind a flag
+        "                               (checkpoint) checkpoint: is the fact that justifies this step still true right now
+        "                               (response) response: stop the agent first and diagnose second, because the loss accrues while the diagnosis runs
+
+ guardrail: a declared rate and volume envelope that the harness enforces (guards) mode: stale premise
+        "                                                                 (guards) mode: autonomy escalation
+        "                                                                 (note) Works without any model of intent, which makes it the first guardrail to build and the last one to remove

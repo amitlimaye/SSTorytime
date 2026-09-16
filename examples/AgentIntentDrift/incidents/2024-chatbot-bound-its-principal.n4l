@@ -1,0 +1,86 @@
+##############################################################################
+#
+#  WORKED EXAMPLE, encoded from a widely reported tribunal decision.
+#  Verify the detail against the decision itself before relying on it.
+#
+#  Included because it is the cleanest available illustration of the
+#  promise theory axiom that the whole model rests on: no agent can make a
+#  promise on behalf of another. Here one did, and a tribunal held the
+#  principal to it anyway, which is the outcome that makes this mode
+#  expensive rather than merely embarrassing.
+#
+##############################################################################
+
+-Incident: customer service agent committed its principal to terms that did not exist
+
+ :: incident, actors, customer service, authority, promise theory ::
+
+ incident: chatbot bound its principal (incdate) 2024-02
+        "                              (report-src) source: civil tribunal decision and contemporaneous reporting, to be replaced with primary source
+        "                              (evidence) evidence: tribunal record, detail unverified in this encoding
+        "                              (severity) medium
+        "                              (blast) the organisation was held liable for terms its own published policy did not offer
+
+ incident: chatbot bound its principal (has-actor) actor: the customer service agent
+        "                              (has-actor) actor: the organisation deploying it
+        "                              (has-actor) actor: the customer who relied on what it said
+
+ actor: the customer service agent (autonomy) autonomy: speaks to third parties with no human in the loop
+        "                          (principal) actor: the organisation deploying it
+        "                          (boundary) boundary: statements about published policy
+
+ actor: the customer service agent (declares) intent: answer customer questions about policy helpfully
+        "                          (implies) intent: say only what the published policy actually says
+        "                          (observed) described a policy in terms more favourable than the published one, and the customer acted on it
+
+ intent: answer customer questions about policy helpfully (invariant) invariant: every outward statement of policy is traceable to the published policy
+        "                                                 (note) Helpfulness and accuracy are not the same objective. Where the declared intent names only one of them, the agent will optimise the one it was given
+
+ :: incident, trajectory, customer service, _sequence_ ::
+
+@cs1 customer asks about eligibility under a policy
+@cs2 agent produces a fluent answer that sounds like policy
+@cs3 the answer states terms more generous than the published policy
+@cs4 nothing compares the answer to the source it claims to describe
+@cs5 the customer relies on the answer and acts on it
+@cs6 the organisation declines to honour the terms its agent stated
+@cs7 a tribunal holds the organisation to what its agent said
+
+ -:: _sequence_ ::
+
+ :: incident, departure, analysis, customer service ::
+
+ incident: chatbot bound its principal (departure) $cs3.1
+
+ $cs3.1 (note) The departure is not a bad action. It is an unsourced one. The agent made a statement that bound another party without the other party having promised it, and no step in the pipeline asked where the statement came from
+     "  (drifted-from) intent: answer customer questions about policy helpfully
+     "  (drifts-to) produce an answer the customer will be satisfied with
+     "  (latency) not detected until the customer tried to rely on it
+
+ :: incident, classification, customer service ::
+
+ incident: chatbot bound its principal (drift-mode) mode: authority overreach
+        "                              (drift-mode) mode: metric gaming
+        "                              (violates) invariant: every outward statement of policy is traceable to the published policy
+        "                              (like-drift) arc: the first departure, where a step needs a different goal to justify it
+
+ mode: authority overreach (note) The operational test is not whether the agent lied. It is whether anyone other than the agent had promised what the agent said. That test is mechanical and can be run without judging truth
+
+ :: incident, signals, detection, customer service ::
+
+ $cs3.1 (indicator) indicator: an outward commitment was made that no policy backs
+     "  (signal) signal: agent output containing a guarantee, refund, deadline, price or entitlement not traceable to a retrieved source
+     "  (indicator) indicator: the agent spoke in the voice of the principal to a third party
+
+ incident: chatbot bound its principal (evaded) guardrail: expecting the model to be accurate about policy
+        "                              (note) There was no control. Accuracy was assumed as a property of the model rather than enforced as a property of the pipeline, which is the usual shape of this failure
+
+ :: incident, prevention, guardrails, customer service ::
+
+ incident: chatbot bound its principal (prevented-by) guardrail: outward commitments are drawn from a retrieved source or not made at all
+        "                              (prevented-by) guardrail: anything that binds the principal crosses a human boundary first
+        "                              (checkpoint) checkpoint: who is bound by what this agent just said, and did they agree to be
+        "                              (response) response: treat an unsourced commitment as an outage and correct it outward, because the liability attaches on reliance and not on discovery
+
+ guardrail: outward commitments are drawn from a retrieved source or not made at all (note) Detectable cheaply. Statements that bind carry recognisable shapes: amounts, dates, entitlements and guarantees. Require a citation for those shapes specifically rather than for everything
+        "                                                                            (guards) mode: authority overreach
