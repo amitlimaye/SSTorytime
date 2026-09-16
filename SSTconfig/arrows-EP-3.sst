@@ -338,6 +338,19 @@
   + has metric kind             (mkind)        - is the metric kind of         (mkind-of)
   + has metric scope            (mscope)       - is the scope of metric        (mscope-of)
 
+ :: machine evaluable predicates, for a runtime with no language model ::
+
+  # The runtime agent has no LLM. It cannot read "materially above the
+  # quiet baseline" and act on it. Every check therefore carries an
+  # evaluable form: a window in seconds, an aggregation, a comparison and
+  # a numeric trigger. The prose stays for the human reviewing the graph;
+  # these fields are what the agent actually executes.
+
+  + has evaluation window seconds (winsec)     - is the window in seconds for  (winsec-of)
+  + has aggregation              (aggregate)   - is the aggregation for        (aggregate-of)
+  + has comparison rule          (cmp-rule)    - is the comparison rule for    (cmp-rule-of)
+  + has trigger condition        (trigger)     - is the trigger condition for  (trigger-of)
+
  :: counter confirmation ::
 
   # Counters confirm a hypothesis; they do not generate one. A counter

@@ -15,6 +15,13 @@ diagnose:
 script:
 	psql -d sstoryline -x -v hyp="'$(HYP)'" -f queries/debug-script.sql
 
+# The deterministic runtime agent. No language model.
+#   make agent COMPLAINT="my network is slow" ANSWER="only large transfers"
+COMPLAINT ?= my network is slow
+ANSWER ?=
+agent:
+	./agent/diagnose.py "$(COMPLAINT)" $(if $(ANSWER),--answer "$(ANSWER)",)
+
 # Which faults can the current playbook library never surface?
 blindspots:
 	psql -d sstoryline -f queries/blind-spots.sql

@@ -67,6 +67,65 @@ engineer for hours — see `incidents/INC-2411`, nine of eleven hours on
 hypothesis one. Hence recall over precision, explicit `confusable` and
 `masked-by` relations, and an observation to make instead of a verdict.
 
+## Two phases: the model runs once, offline
+
+```
+PHASE 1 -- ONCE PER DOCUMENT, OFFLINE, WITH AN LLM, REVIEWED BY A HUMAN
+  plain-English incident reports, design docs, functional specs,
+  ASIC manual  ──► LLM extraction ──► N4L ──► graph
+
+PHASE 2 -- EVERY DIAGNOSIS, ONLINE, NO MODEL IN THE LOOP
+  complaint ──► agent/diagnose.py ──► ranked hypotheses
+                                  ──► executable telemetry plan
+```
+
+Users write in plain English. The language model earns its keep exactly
+once, turning that prose into N4L, where a human can review the diff before
+it lands. At runtime there is no model: `agent/diagnose.py` is standard
+library plus `psql`, every decision is a lookup or an integer comparison,
+and the same input always produces the same output.
+
+**The consequence, which is easy to miss:** with no model at runtime,
+everything the agent needs must be machine-evaluable. "Materially above the
+quiet baseline" is LLM-readable, not agent-executable. So extraction has a
+second target beyond prose — `layers/60-check-predicates.n4l` — carrying
+window in seconds, aggregation, comparison rule and a numeric trigger. The
+prose stays for the human reviewing the graph; the predicate is what runs.
+
+A check missing any of those is reported **NOT EVALUABLE** and its
+hypothesis stays open, because silently skipping a check turns an unsettled
+hypothesis into an apparently excluded one. The same applies one level up: a
+hypothesis with no check at all is reported as a gap in the graph, not as a
+clean bill of health.
+
+```
+$ ./agent/diagnose.py "everything is sluggish today" --answer "comes and goes"
+
+complaint in : 'everything is sluggish today'
+matched      : complaint: the network is slow  (lexical overlap 0.67)
+
+--- RANKED HYPOTHESES ---
+  [  5] fault: ecmp hash polarisation
+        explains 1 symptom(s) = +3
+        confirmed 3x before = +3
+        covered by playbook: interface congestion which did not fire = -3
+        precondition holds = +2
+
+--- TELEMETRY PLAN FOR THE LEADING HYPOTHESIS ---
+  * check: transmitted byte spread across ecmp members
+      path      : interfaces interface state counters out-octets
+      winsec    : 300
+      aggregate : delta over window, per member interface
+      compare   : max member against min member within the same group
+      trigger   : ratio above 4.0 with the minimum member below 10 percent of the maximum
+```
+
+Complaint matching is lexical overlap against stored `wording:` variants —
+a stopword list and set arithmetic, which is the entire extent of the text
+processing at runtime. An unmatched complaint is reported as a **curation
+gap**, not guessed at: it is a wording worth adding, which is a job for a
+human and an LLM, offline, where it belongs.
+
 ## Is this a reasoning engine? No — and that is the point
 
 A fair reading of this library is *an LLM's associative memory without the
