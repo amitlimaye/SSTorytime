@@ -1,0 +1,56 @@
+##############################################################################
+#  Prior incident. One file per report.
+#
+#  Prior incidents supply three things the other layers cannot: priors on how
+#  often a cause actually turns out to be the cause here, the symptom set as
+#  it was really reported rather than as a manual would phrase it, and the
+#  confusable links, which are learned by having been wrong.
+#
+#  Record the WRONG hypotheses too. An incident that only records the answer
+#  teaches the graph nothing about discrimination, and discrimination is the
+#  whole product.
+##############################################################################
+
+-Incident INC-2411: intermittent loss between racks
+
+ :: incident, observed symptoms, dc1 ::
+
+ incident: INC-2411 (doc-src) source: prior incident report
+        "           (ttd) duration: eleven hours, of which nine were spent on the first hypothesis
+        "           (symptom-of) symptom: intermittent loss with no error counters incrementing
+        "           (symptom-of) symptom: loss correlates with time of day or with a batch job
+        "           (symptom-of) symptom: average interface utilisation looks healthy
+        "           (symptom-of) symptom: connectivity works within a rack and fails between racks
+
+ :: incident, hypotheses considered ::
+
+ # The rejected hypotheses are the valuable part. Each one that was
+ # eliminated, and what eliminated it, is a discriminating test that
+ # earned its place in the model.
+
+ incident: INC-2411 (question) first hypothesis was a failing optic, pursued for nine hours on the strength of the intermittency alone
+        "           (excluded-by) test: read optical receive power at both ends of the same link
+        "           (note) Optical power was within spec at both ends on every link in the path. This test costs two minutes and was run ninth. That ordering is the actual finding of this incident
+
+ incident: INC-2411 (excluded-by) test: ping with do not fragment at increasing sizes along the path
+        "           (note) Loss did not correlate with frame size, which eliminated the mtu and overlay families together
+
+ incident: INC-2411 (confirmed-by) test: compare per interface utilisation across members of the same ecmp group
+        "           (note) One uplink at line rate with its peer near idle, sustained across the batch window
+
+ :: incident, root cause and resolution ::
+
+ incident: INC-2411 (cause-by) fault: ecmp hash polarisation
+        "           (resolved-by) resolution: set a distinct hash seed per tier as the architecture document requires
+        "           (note) The precondition had been visible in the running config the whole time. Both tiers were on the vendor default seed, diverging from a design requirement written explicitly to prevent this
+
+ fault: ecmp hash polarisation (priors) prior: confirmed root cause 3 times in this fabric
+ fault: unidirectional link fault (priors) prior: confirmed root cause 1 time in this fabric
+ fault: buffer exhaustion from microbursts (priors) prior: confirmed root cause 2 times in this fabric
+ fault: configuration drift from template (priors) prior: contributing precondition 4 times in this fabric
+
+ # Learned from being wrong. These two look the same at the level this
+ # team looked first, and the graph should say so before the next incident.
+
+ fault: ecmp hash polarisation (co-occurs) fault: configuration drift from template
+ resolution: set a distinct hash seed per tier as the architecture document requires (resolves) fault: ecmp hash polarisation

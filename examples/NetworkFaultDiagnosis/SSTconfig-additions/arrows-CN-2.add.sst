@@ -1,0 +1,19 @@
+
+ # ------------------------------------------------------------------
+ # BEGIN network-fault-diagnosis arrows (CONTAINS)
+ # ------------------------------------------------------------------
+
+ :: fault taxonomy ::
+
+  + fault taxonomy has class    (has-fault)    - is a fault class in           (fault-in)
+
+ :: physical and logical containment ::
+
+  + fabric contains device      (has-device)   - is a device in fabric         (device-in)
+  + device contains asic        (has-asic)     - is the asic in device         (asic-in)
+  + asic has resource table     (has-table)    - is a resource table in asic   (table-in)
+  + device has interface        (has-intf)     - is an interface on device     (intf-on)
+
+ # ------------------------------------------------------------------
+ # END network-fault-diagnosis arrows (CONTAINS)
+ # ------------------------------------------------------------------

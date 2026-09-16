@@ -1,0 +1,51 @@
+##############################################################################
+#  GENERATED from the ASIC programmer manual. Do not hand edit.
+#
+#  Only three things are extracted: the drop reason enumeration, the
+#  resource table capacities per forwarding profile, and counter semantics.
+#  Everything else in the manual is out of scope for diagnosis.
+##############################################################################
+
+-Asic mechanism facts
+
+ :: asic, resource tables, capacity ::
+
+ asic: model tomahawk class (doc-src) source: asic programmer manual
+        "                   (has-table) table: longest prefix match
+        "                   (has-table) table: exact match host routes
+        "                   (has-table) table: access control entries
+        "                   (has-table) table: layer two forwarding
+
+ # The trap that costs the most time. Capacity depends on the configured
+ # forwarding profile, so a figure quoted without its profile is not a fact.
+
+ table: longest prefix match (capacity) capacity: 131072 entries in the balanced profile
+        "                    (capacity) capacity: 262144 entries in the routing heavy profile
+        "                    (manual-ref) manual: forwarding resource partitioning chapter
+        "                    (counter) counter: table utilisation high water mark
+
+ table: access control entries (capacity) capacity: 16384 entries shared between ingress and egress
+        "                      (manual-ref) manual: forwarding resource partitioning chapter
+        "                      (note) Shared between directions, so an egress policy silently reduces the ingress budget. Utilisation must be read as a single shared number
+
+ :: asic, drop reasons ::
+
+ # The finite set of reasons this silicon discards a frame. This is what
+ # turns packets are being lost into a bounded question, and it is the
+ # highest value page in the manual.
+
+ asic: model tomahawk class (drop-code) drop: frame exceeds egress interface mtu
+        "                   (drop-code) drop: no buffer available at enqueue
+        "                   (drop-code) drop: cpu policer rate exceeded
+        "                   (drop-code) drop: no forwarding entry matched
+        "                   (drop-code) drop: access control entry denied
+        "                   (drop-code) drop: ingress frame check sequence error
+
+ drop: no forwarding entry matched (note) Ambiguous by itself. It covers both a genuinely unknown destination and an entry that could not be installed because the table was full, and the manual does not separate them. Read table utilisation alongside it or this counter will mislead
+        "                          (manual-ref) manual: drop reason encoding table
+
+ :: asic, counter semantics ::
+
+ counter: per queue tail drops (note) Incremented at enqueue when the queue is at its threshold. Free running and never cleared automatically, so a nonzero value proves nothing on its own. Only the delta over a known window is evidence
+ counter: table utilisation high water mark (note) A high water mark, not an instantaneous value. It does not fall when entries are removed, so a high reading may describe a condition that has already passed
+ counter: receive optical power (note) Read from transceiver diagnostics rather than the forwarding pipeline, so it is available even when the link carries no traffic

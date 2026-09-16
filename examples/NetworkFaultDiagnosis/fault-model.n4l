@@ -1,0 +1,281 @@
+##############################################################################
+#
+#  Network fault diagnosis: the causal reference model
+#
+#  This is the curated layer. It holds knowledge about how switching
+#  fabrics fail: mechanisms, what they look like from outside, what
+#  distinguishes them, and what innocently looks the same.
+#
+#  It does NOT hold your topology, your configs or your counter values.
+#  Those are generated into layers/ mechanically from your documents and
+#  devices, because they are data and this is knowledge. Mixing the two is
+#  how a graph like this rots.
+#
+#  Naming convention, because queries match nodes by prefix:
+#
+#    fault:        a mechanism that can produce symptoms
+#    symptom:      something a human or a monitor observes and complains about
+#    counter:      a hardware or software counter, from the ASIC manual
+#    drop:         an ASIC drop reason code, from the ASIC manual
+#    log:          a log signature
+#    precondition: a condition that must hold in THIS network for a fault
+#                  to be possible at all. This is what prunes the list
+#    test:         an observation that separates one hypothesis from another
+#    innocent:     the benign thing that produces the same observable
+#
+##############################################################################
+
+-Network fault diagnosis: causal reference model
+
+ #############################################################
+ # 1. Method. What this graph is for and what it is not.
+ #############################################################
+
+ :: method, diagnosis, how to use this ::
+
+ diagnostic method (note) Given observed symptoms, walk the manifests arrows backwards to every fault that could produce them. Prune by precondition against this network. Rank what survives. Then stop ranking and start discriminating
+        "          (note) The product of this graph is not a ranked list. It is the next test to run. A ranked list is only the means of choosing which test
+        "          (note) Optimise for recall, not precision. A hypothesis set that omits the true cause is worse than one with six entries, because the engineer will trust the list and stop thinking
+
+ ranking is not a probability (note) Scores here are a transparent heuristic over symptom coverage, precondition match and prior occurrences. They are not a posterior and must never be presented as one
+        "                     (note) The honest reading of a rank is how much of what you observed this cause would explain, not how likely it is
+        "                     (note) A confidently ordered wrong list is the specific harm this tool can do. An engineer anchored on hypothesis one loses hours, and the graph gave them the anchor
+
+ why masking matters (note) A cause can be present with its usual symptom invisible, because something upstream absorbed it. Rate limiting masks a flood. A retry masks a drop. Buffering masks a microburst
+        "            (note) So absence of a symptom is weak evidence of absence of the cause, and the graph records what masks what so a query can say that instead of silently ruling the cause out
+
+ :: method, the four input documents ::
+
+ # Each fact carries a doc-src saying which class of document it came from,
+ # so a hypothesis can cite what it rests on rather than asserting.
+
+ source: architecture document (note) Supplies design intent and design requirements. What the fabric is supposed to do, which is the only thing that makes a config value wrong rather than merely unusual
+ source: asic programmer manual (note) Supplies the mechanism layer. Drop reason codes, table capacities, counter semantics, register meanings. Critically, it supplies the FINITE set of reasons this silicon can discard a frame, which is what turns packets are being lost into a bounded question
+ source: switch configuration (note) Supplies preconditions and configured values. Used to prune hypotheses whose preconditions do not hold here, and to find divergence from the architecture document
+ source: prior incident report (note) Supplies priors, real symptom sets as they were actually reported, and the tests that turned out to settle it. Also supplies the confusable links, because those are learned from having been wrong
+
+ source: asic programmer manual (note) These manuals run to thousands of pages and must not be bulk ingested. text2N4L on one will take hours and produce mostly noise. Extract three things by hand: the drop reason enumeration, the resource table capacities, and the counter definitions
+
+ #############################################################
+ # 2. Fault classes
+ #
+ #    Each carries: mechanism, symptoms, preconditions, the test that
+ #    settles it, and the innocent explanation for its observables.
+ #############################################################
+
+ :: fault, mtu, path mtu discovery, blackhole ::
+
+ fault: mtu mismatch on a transit hop (note) One hop in the path has a smaller L2 MTU than the endpoints negotiated. Frames above that size are discarded, and if ICMP fragmentation needed is filtered or rate limited the sender never learns why
+        "                             (fault-sev) impact: high
+        "                             (doc-src) source: architecture document
+        "                             (manifests) symptom: small flows work and large transfers stall
+        "                             (manifests) symptom: tcp session establishes then hangs
+        "                             (manifests) symptom: application works for some endpoints and not others
+        "                             (counter) counter: oversize frames discarded on ingress
+        "                             (drop-code) drop: frame exceeds egress interface mtu
+        "                             (cfg-pred) precondition: at least one interface in the path has a smaller mtu than the endpoints
+        "                             (has-test) test: ping with do not fragment at increasing sizes along the path
+        "                             (innocent) innocent: a deliberately lower mtu on a tunnel interface that the endpoints already account for
+
+ test: ping with do not fragment at increasing sizes along the path (test-cmd) command: ping with the df bit set, sweeping size from 1400 to the configured jumbo value, hop by hop
+        "                                                           (if-true) result: a clean size threshold below the configured mtu, identical on every retry
+        "                                                           (if-false) result: loss that does not correlate with size
+        "                                                           (discriminates) fault: mtu mismatch on a transit hop
+        "                                                           (discriminates) fault: buffer exhaustion from microbursts
+        "                                                           (note) This is the single highest value test in the model. It is cheap, it is fast, and it cleanly separates a size dependent fault from a rate dependent one, which are the two families that get confused most often
+
+ :: fault, tcam, table exhaustion, scale ::
+
+ fault: hardware table exhaustion (note) A forwarding, route or ACL table in the ASIC is full. New entries are rejected and either software forwarded at a fraction of the rate, or silently not installed at all. Which of those two happens is an ASIC property and must be read from the manual, not assumed
+        "                         (fault-sev) impact: critical
+        "                         (doc-src) source: asic programmer manual
+        "                         (manifests) symptom: newly added prefixes or hosts are unreachable while existing ones are fine
+        "                         (manifests) symptom: forwarding works but at a fraction of line rate
+        "                         (manifests) symptom: the problem appeared after a scale event rather than after a change
+        "                         (counter) counter: table utilisation high water mark
+        "                         (logsig) log: table full or resource exhausted message naming the table
+        "                         (cfg-pred) precondition: the entry count for this table is near the capacity stated in the asic manual
+        "                         (has-test) test: compare installed entry count against the manual capacity for that exact table
+        "                         (innocent) innocent: a table that is designed to run near full, where the manual documents graceful overflow
+
+ test: compare installed entry count against the manual capacity for that exact table (test-cmd) command: read the table utilisation counter, then read the capacity for that table and that forwarding profile from the asic manual
+        "                                                                             (note) The trap is the forwarding profile. The same silicon offers several table partitionings and the capacity depends on which one is configured, so the manual figure is only meaningful alongside the configured profile
+        "                                                                             (discriminates) fault: hardware table exhaustion
+        "                                                                             (if-true) result: utilisation at or near the documented capacity for the configured profile
+
+ :: fault, ecmp, hashing, polarisation ::
+
+ fault: ecmp hash polarisation (note) Traffic that should spread over several equal cost paths concentrates on a subset, because successive devices hash on the same fields with the same seed and make the same choice
+        "                      (fault-sev) impact: high
+        "                      (doc-src) source: asic programmer manual
+        "                      (manifests) symptom: one uplink congested while its peers are idle
+        "                      (manifests) symptom: loss that appears only above a traffic threshold
+        "                      (manifests) symptom: loss affects some flows persistently and others never
+        "                      (counter) counter: per interface transmitted bytes
+        "                      (counter) counter: per queue tail drops
+        "                      (cfg-pred) precondition: more than one equal cost path exists between the endpoints
+        "                      (cfg-pred) precondition: the hash seed is identical across tiers
+        "                      (has-test) test: compare per interface utilisation across members of the same ecmp group
+        "                      (innocent) innocent: genuine traffic asymmetry from a small number of very large flows, which no hash can spread
+
+ test: compare per interface utilisation across members of the same ecmp group (test-cmd) command: read transmitted byte counters for every member interface over the same interval
+        "                                                                      (if-true) result: sustained imbalance far beyond what flow count variance explains
+        "                                                                      (discriminates) fault: ecmp hash polarisation
+        "                                                                      (discriminates) fault: unidirectional link fault
+        "                                                                      (discriminates) fault: buffer exhaustion from microbursts
+        "                                                                      (note) Distinguish the innocent case by flow count, not by byte count. A handful of elephant flows produces the same byte imbalance and is not a fault
+
+ :: fault, buffers, microburst, congestion ::
+
+ fault: buffer exhaustion from microbursts (note) Instantaneous arrival rate exceeds egress capacity for intervals far shorter than the counter polling interval. Average utilisation looks comfortable and the buffer is nonetheless overrun
+        "                                  (fault-sev) impact: high
+        "                                  (doc-src) source: asic programmer manual
+        "                                  (manifests) symptom: intermittent loss with no error counters incrementing
+        "                                  (manifests) symptom: loss correlates with time of day or with a batch job
+        "                                  (manifests) symptom: average interface utilisation looks healthy
+        "                                  (counter) counter: per queue tail drops
+        "                                  (counter) counter: buffer high water mark per port group
+        "                                  (drop-code) drop: no buffer available at enqueue
+        "                                  (cfg-pred) precondition: a speed change or fan in exists at this hop
+        "                                  (has-test) test: read queue depth high water marks rather than average utilisation
+        "                                  (innocent) innocent: a shallow buffer by design on a switch chosen for latency rather than burst absorption
+
+ test: read queue depth high water marks rather than average utilisation (test-cmd) command: read the per queue peak depth and tail drop counters, clear them, and re read after a known burst window
+        "                                                                (note) Average utilisation is the wrong instrument here and will actively mislead. The whole mechanism lives below the polling interval, which is why this fault is so often misattributed to the application
+        "                                                                (discriminates) fault: buffer exhaustion from microbursts
+        "                                                                (if-true) result: tail drops incrementing while average utilisation stays moderate
+
+ :: fault, optics, unidirectional, physical ::
+
+ fault: unidirectional link fault (note) One direction of a link carries traffic and the other does not, from a broken fibre strand, a failing transceiver or a dirty connector. Protocols that assume symmetry behave incoherently
+        "                         (fault-sev) impact: critical
+        "                         (doc-src) source: prior incident report
+        "                         (manifests) symptom: protocol adjacency flaps without a clean reason
+        "                         (manifests) symptom: traffic blackholes in one direction only
+        "                         (manifests) symptom: neighbour discovery is asymmetric between the two ends
+        "                         (counter) counter: receive optical power
+        "                         (counter) counter: frame check sequence errors on ingress
+        "                         (has-test) test: read optical receive power at both ends of the same link
+        "                         (innocent) innocent: an intentionally asymmetric path where return traffic is routed elsewhere by design
+
+ test: read optical receive power at both ends of the same link (test-cmd) command: read transceiver diagnostics at each end and compare against the transceiver specified minimum
+        "                                                       (if-true) result: receive power below spec at exactly one end
+        "                                                       (discriminates) fault: unidirectional link fault
+        "                                                       (discriminates) fault: cabling or patch error
+        "                                                       (note) Do this before anything protocol shaped. It is the cheapest test in the model and it settles an entire family of confusing symptoms
+
+ :: fault, control plane, copp ::
+
+ fault: control plane policer discarding protocol traffic (note) The ASIC rate limits traffic punted to the CPU. Under load, or under a scan, legitimate control traffic is discarded alongside the noise the policer was installed to stop
+        "                                                 (fault-sev) impact: high
+        "                                                 (doc-src) source: asic programmer manual
+        "                                                 (manifests) symptom: protocol adjacency flaps without a clean reason
+        "                                                 (manifests) symptom: address resolution fails intermittently for some hosts
+        "                                                 (manifests) symptom: the control plane degrades while data plane forwarding stays clean
+        "                                                 (counter) counter: cpu queue drops per protocol class
+        "                                                 (drop-code) drop: cpu policer rate exceeded
+        "                                                 (cfg-pred) precondition: a control plane policing profile is applied
+        "                                                 (has-test) test: read per protocol cpu queue drop counters
+        "                                                 (innocent) innocent: a policer correctly discarding an actual flood, where the drop is the system working
+
+ test: read per protocol cpu queue drop counters (test-cmd) command: read cpu bound queue drop counters broken out by protocol class, over an interval spanning a failure
+        "                                        (if-true) result: drops incrementing on the class carrying the protocol that is flapping
+        "                                        (discriminates) fault: control plane policer discarding protocol traffic
+        "                                        (discriminates) fault: unidirectional link fault
+        "                                        (note) This test separates a control plane cause from a physical one, which present almost identically at the level most people look first
+
+ :: fault, overlay, vxlan, evpn ::
+
+ fault: overlay to underlay mapping inconsistency (note) A tunnel endpoint disagrees with its peers about which overlay segment maps to which identifier, or the underlay cannot carry the encapsulated frame
+        "                                         (fault-sev) impact: high
+        "                                         (doc-src) source: architecture document
+        "                                         (manifests) symptom: connectivity works within a rack and fails between racks
+        "                                         (manifests) symptom: small flows work and large transfers stall
+        "                                         (cfg-pred) precondition: an overlay encapsulation is configured
+        "                                         (has-test) test: compare segment to identifier mapping across all endpoints that should share it
+        "                                         (innocent) innocent: a segment intentionally local to one rack
+
+ test: compare segment to identifier mapping across all endpoints that should share it (test-cmd) command: dump the configured segment to identifier mapping on every endpoint and diff them against the architecture document
+        "                                                                               (discriminates) fault: overlay to underlay mapping inconsistency
+        "                                                                               (note) The encapsulation overhead makes this fault co-present with mtu symptoms, which is why the two are linked as confusable below
+
+ :: fault, config drift ::
+
+ fault: configuration drift from template (note) The running configuration has diverged from the template the architecture document assumes. Nothing is broken in isolation and the fabric is no longer the thing the design reasoned about
+        "                                 (fault-sev) impact: medium
+        "                                 (doc-src) source: switch configuration
+        "                                 (manifests) symptom: the problem affects one device and its peers are fine
+        "                                 (manifests) symptom: behaviour changed with no corresponding change record
+        "                                 (has-test) test: diff running configuration against the rendered template
+        "                                 (innocent) innocent: a documented local exception that the template deliberately does not cover
+        "                                 (note) This fault is rarely the whole answer and very often the reason another fault became possible. Treat a drift finding as a precondition explanation rather than a root cause
+
+ test: diff running configuration against the rendered template (test-cmd) command: render the template for this device role and diff it against the running configuration, ignoring known local exceptions
+        "                                                       (discriminates) fault: configuration drift from template
+
+ fault: cabling or patch error (note) A link is not connected where the architecture document says it is
+        "                      (fault-sev) impact: high
+        "                      (doc-src) source: architecture document
+        "                      (manifests) symptom: neighbour discovery is asymmetric between the two ends
+        "                      (manifests) symptom: the problem affects one device and its peers are fine
+        "                      (has-test) test: compare discovered neighbours against the architecture document cabling plan
+        "                      (innocent) innocent: a documented cabling change that has not reached the architecture document yet
+
+ test: compare discovered neighbours against the architecture document cabling plan (test-cmd) command: dump the discovered neighbour table on every device and diff it against the cabling plan
+        "                                                                            (discriminates) fault: cabling or patch error
+
+ #############################################################
+ # 3. Confusability
+ #
+ #    Which faults present identically at the level people look first.
+ #    These pairs are what make a discriminating test worth running, and
+ #    they are the part of the model that is learned from having been
+ #    wrong rather than read out of a manual.
+ #############################################################
+
+ :: confusability, differential diagnosis ::
+
+ fault: mtu mismatch on a transit hop (confusable) fault: overlay to underlay mapping inconsistency
+        "                             (note) Encapsulation overhead reduces the effective payload, so an overlay that is otherwise correct produces textbook mtu symptoms. Check the overlay overhead arithmetic before replacing optics
+
+ fault: buffer exhaustion from microbursts (confusable) fault: ecmp hash polarisation
+        "                                  (note) Both produce tail drops on one interface under load and nothing at rest. Per interface utilisation separates them: polarisation shows a persistently idle peer, bursts do not
+
+ fault: unidirectional link fault (confusable) fault: control plane policer discarding protocol traffic
+        "                         (note) Both present as adjacency flapping with clean data plane forwarding. Optical receive power settles it in seconds and should be read first
+
+ fault: unidirectional link fault (confusable) fault: cabling or patch error
+ fault: hardware table exhaustion (confusable) fault: configuration drift from template
+        "                         (note) Drift that changed a forwarding profile changes the table capacity, so the exhaustion is real and the cause is the drift
+
+ # Presenting identically at layer 3 is a narrower claim than being
+ # confusable, and it says something specific: a traceroute will not
+ # separate these, so do not spend the hour.
+
+ fault: ecmp hash polarisation (sm-l3) fault: buffer exhaustion from microbursts
+ fault: mtu mismatch on a transit hop (sm-l3) fault: overlay to underlay mapping inconsistency
+
+ #############################################################
+ # 4. Masking
+ #
+ #    Why an expected symptom can be absent while the cause is present.
+ #    Without this the query silently rules out the right answer, which
+ #    is the worst thing a diagnostic tool can do.
+ #############################################################
+
+ :: masking, absent symptoms ::
+
+ fault: buffer exhaustion from microbursts (masked-by) masking: counter polling interval longer than the burst
+ masking: counter polling interval longer than the burst (note) The classic. Average utilisation over thirty seconds cannot see a two millisecond overrun, so the instrument reports health while the queue is overflowing
+
+ fault: hardware table exhaustion (masked-by) masking: software forwarding that preserves connectivity at reduced rate
+ masking: software forwarding that preserves connectivity at reduced rate (note) Connectivity tests pass. Only throughput reveals it, so a reachability based monitor will report the fabric as healthy
+
+ fault: unidirectional link fault (masked-by) masking: transport layer retransmission
+ masking: transport layer retransmission (note) The application reports slowness rather than loss, which routes the incident to the application team and away from the fabric
+
+ fault: ecmp hash polarisation (masked-by) masking: aggregate utilisation well below capacity
+ masking: aggregate utilisation well below capacity (note) Total fabric utilisation of thirty percent is compatible with one member at line rate and dropping
+
+ fault: control plane policer discarding protocol traffic (masked-by) masking: protocol level retry absorbing the loss
+ masking: protocol level retry absorbing the loss (note) Adjacency survives and only the timers show strain, until the day the load is slightly higher
