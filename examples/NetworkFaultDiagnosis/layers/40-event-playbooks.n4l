@@ -1,0 +1,73 @@
+##############################################################################
+#  GENERATED from the anomaly playbook definitions. Do not hand edit.
+#
+#  This is the agent's ENTRY POINT. The anomaly report is a set of events,
+#  each emitted by a playbook that matched a pattern. Unlike counters, events
+#  are symbols: discrete, already interpreted, scoped to a device and a time,
+#  and drawn from a finite enumerable vocabulary. That is what makes them
+#  usable as the thing hypotheses are generated from.
+#
+#  Each event maps onto the symptom wording the causal model uses. Keeping
+#  the mapping here rather than in fault-model.n4l is the point of the split:
+#  playbooks change often, knowledge about how fabrics fail does not. A new
+#  playbook adds a mapping and touches nothing else.
+##############################################################################
+
+-Anomaly playbook event vocabulary
+
+ :: playbooks, event vocabulary, agent input ::
+
+ playbook: interface congestion (doc-src) source: anomaly playbook definitions
+        "  (emits) event: sustained egress queue drops on a fabric port
+        "  (emits) event: interface utilisation imbalance within a link group
+
+ playbook: adjacency stability (emits) event: routing adjacency reset
+        "  (emits) event: repeated neighbour state transitions on one interface
+
+ playbook: reachability probe (emits) event: inter rack probe loss above threshold
+        "  (emits) event: probe loss affecting a subset of destination prefixes
+
+ playbook: optics health (emits) event: transceiver receive power below threshold
+
+ playbook: resource utilisation (emits) event: forwarding table utilisation above threshold
+
+ playbook: config compliance (emits) event: running configuration diverged from template
+
+ playbook: flow completion (emits) event: large transfer completion time regression
+        "  (emits) event: transfer stalls after session establishment
+
+ :: event to symptom mapping ::
+
+ # The join between the machine feed and the causal model. An event that
+ # maps to no symptom is an event the model cannot reason about, and a
+ # symptom with no event is a blind spot. See queries/blind-spots.sql.
+
+ event: sustained egress queue drops on a fabric port (describe) symptom: intermittent loss with no error counters incrementing
+        "                                             (describe) symptom: loss correlates with time of day or with a batch job
+
+ event: interface utilisation imbalance within a link group (describe) symptom: one uplink congested while its peers are idle
+        "                                                   (describe) symptom: loss that appears only above a traffic threshold
+
+ event: routing adjacency reset (describe) symptom: protocol adjacency flaps without a clean reason
+ event: repeated neighbour state transitions on one interface (describe) symptom: protocol adjacency flaps without a clean reason
+
+ event: inter rack probe loss above threshold (describe) symptom: connectivity works within a rack and fails between racks
+        "                                     (describe) symptom: intermittent loss with no error counters incrementing
+
+ event: probe loss affecting a subset of destination prefixes (describe) symptom: newly added prefixes or hosts are unreachable while existing ones are fine
+
+ event: transceiver receive power below threshold (describe) symptom: traffic blackholes in one direction only
+
+ event: forwarding table utilisation above threshold (describe) symptom: newly added prefixes or hosts are unreachable while existing ones are fine
+        "                                            (describe) symptom: the problem appeared after a scale event rather than after a change
+
+ event: running configuration diverged from template (describe) symptom: behaviour changed with no corresponding change record
+
+ event: large transfer completion time regression (describe) symptom: small flows work and large transfers stall
+ event: transfer stalls after session establishment (describe) symptom: tcp session establishes then hangs
+
+ :: playbook coverage, known gaps ::
+
+ playbook library (note) Coverage is a property of the playbook set, not of the causal model. A fault whose every symptom lacks an emitting playbook is invisible to the agent no matter how good its reasoning, and the agent should say so rather than silently omitting it
+        "         (question) no playbook currently emits an event for asymmetric neighbour discovery, which is the primary tell for cabling and patch errors
+        "         (tbd) a neighbour consistency playbook comparing discovered adjacencies against the cabling plan would close the largest gap in this library

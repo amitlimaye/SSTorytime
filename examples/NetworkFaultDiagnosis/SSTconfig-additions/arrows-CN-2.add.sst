@@ -7,6 +7,14 @@
 
   + fault taxonomy has class    (has-fault)    - is a fault class in           (fault-in)
 
+ :: anomaly playbooks ::
+
+  # The playbook library is a CLOSED vocabulary, like the asic drop reason
+  # enumeration. That is what makes it a usable entry point: the set of
+  # things the agent can ever be told is finite and enumerable.
+
+  + playbook emits event        (emits)        - is emitted by playbook        (emitted-by)
+
  :: physical and logical containment ::
 
   + fabric contains device      (has-device)   - is a device in fabric         (device-in)

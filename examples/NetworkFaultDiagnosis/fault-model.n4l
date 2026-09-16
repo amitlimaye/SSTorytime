@@ -279,3 +279,80 @@
 
  fault: control plane policer discarding protocol traffic (masked-by) masking: protocol level retry absorbing the loss
  masking: protocol level retry absorbing the loss (note) Adjacency survives and only the timers show strain, until the day the load is slightly higher
+
+ #############################################################
+ # 5. Counters confirm. They do not diagnose.
+ #
+ #    Counters are the wrong modality for a knowledge graph, and this
+ #    section exists to keep them out of it while still using them.
+ #############################################################
+
+ :: modality, counters, telemetry boundary ::
+
+ modality rule (note) Events are symbols. Counters are signals. This library stores symbols, so counter VALUES never enter the graph and counter SEMANTICS always do
+        "      (note) What belongs here is the predicate: which counter, over which window, compared against what, and what a true or false reading means for which hypothesis. That is knowledge and it changes rarely
+        "      (note) What belongs in the telemetry system is every actual reading. Those change every second, are high cardinality across ports and devices, and would bury the knowledge under millions of nodes that are stale the moment they load
+        "      (note) So the graph does not answer what is the tail drop count. It answers which counter would settle this hypothesis, over what window, and what reading means which. The agent compiles that into a telemetry query and runs it
+
+ why counters cannot generate hypotheses (note) Three reasons, and each is sufficient on its own
+        "                                (note) Free running. A nonzero counter proves nothing, because it has been accumulating since boot. Only a delta across a window spanning the anomaly is evidence at all
+        "                                (note) Unscoped. A counter is an aggregate over everything that crossed that interface, so it cannot attribute loss to the flow anyone is complaining about
+        "                                (note) Multiple comparisons. A fabric exposes thousands of counters. Search them for anomalies and something will always look anomalous, so a hypothesis discovered by scanning counters is a hypothesis with no prior and no meaning
+
+ the generation rule (note) Hypotheses are generated from the anomaly report and from nothing else. Counters may raise or lower a hypothesis that events already raised, and may never introduce one
+        "            (note) This rule will be under constant pressure. Someone will want to scan counters for anomalies and feed them in, because it feels like using more data. It is the exact mechanism that produces a plausible and wrong ranked list
+        "            (note) The enforcement is in the query, not in discipline. See queries/probable-cause.sql, where candidates come only from event resolution and checks can only reweight them
+
+ :: confirmation checks, counter predicates ::
+
+ # Each check is a compilable predicate, not an instruction to a human.
+ # Window and comparison are part of the check because a reading without
+ # them is not evidence.
+
+ check: tail drop delta on the congested egress queue (counter) counter: per queue tail drops
+        "                                             (window) window: the interval spanning the reported anomaly, compared against an equal quiet interval
+        "                                             (if-true) result: delta is materially above the quiet baseline on one queue
+        "                                             (if-false) result: delta indistinguishable from the quiet baseline
+        "                                             (conf-str) strength: confirms congestion occurred, does not identify which of the congestion causes produced it
+        "                                             (confirms) fault: buffer exhaustion from microbursts
+        "                                             (confirms) fault: ecmp hash polarisation
+        "                                             (note) Deliberately confirms two faults. A check that cannot separate them should say so rather than be read as pointing at the first one
+
+ check: transmitted byte spread across ecmp members (counter) counter: per interface transmitted bytes
+        "                                           (window) window: the interval spanning the reported anomaly, per member interface
+        "                                           (if-true) result: sustained spread far beyond flow count variance, with at least one member near idle
+        "                                           (if-false) result: members within normal spread of each other
+        "                                           (conf-str) strength: separates polarisation from every other congestion cause
+        "                                           (confirms) fault: ecmp hash polarisation
+        "                                           (excludes) fault: buffer exhaustion from microbursts
+
+ check: table utilisation against the manual capacity (counter) counter: table utilisation high water mark
+        "                                             (window) window: instantaneous, read alongside the configured forwarding profile
+        "                                             (if-true) result: utilisation at or near the documented capacity for the configured profile
+        "                                             (if-false) result: utilisation well below the documented capacity
+        "                                             (conf-str) strength: decisive when true, weak when false, because the counter is a high water mark and does not fall when entries are removed
+        "                                             (confirms) fault: hardware table exhaustion
+
+ check: optical receive power against transceiver minimum (counter) counter: receive optical power
+        "                                                  (window) window: instantaneous, read at both ends of the same link
+        "                                                  (if-true) result: below specified minimum at exactly one end
+        "                                                  (if-false) result: within specification at both ends
+        "                                                  (conf-str) strength: decisive in both directions, which is rare and is why this check is worth running before anything else
+        "                                                  (confirms) fault: unidirectional link fault
+        "                                                  (excludes) fault: unidirectional link fault
+
+ check: cpu queue drop delta by protocol class (counter) counter: cpu queue drops per protocol class
+        "                                       (window) window: the interval spanning an adjacency flap
+        "                                       (if-true) result: drops incrementing on the class carrying the flapping protocol
+        "                                       (if-false) result: no drops on that class across the flap
+        "                                       (conf-str) strength: decisive when true, and separates a control plane cause from a physical one
+        "                                       (confirms) fault: control plane policer discarding protocol traffic
+        "                                       (excludes) fault: unidirectional link fault
+
+ check: frame check sequence error delta on path links (counter) counter: frame check sequence errors on ingress
+        "                                               (window) window: the interval spanning the reported anomaly, per link in the path
+        "                                               (if-true) result: errors incrementing on one link
+        "                                               (if-false) result: no error growth on any link in the path
+        "                                               (conf-str) strength: confirms a physical layer problem, does not distinguish a dirty connector from a failing transceiver
+        "                                               (confirms) fault: unidirectional link fault
+        "                                               (confirms) fault: cabling or patch error

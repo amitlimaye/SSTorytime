@@ -37,6 +37,15 @@
   + has fault severity          (fault-sev)    - is the severity of fault      (fault-sev-of)
   + has time to diagnose        (ttd)          - is the time to diagnose       (ttd-of)
 
+ :: counter confirmation ::
+
+  # Counters confirm a hypothesis; they do not generate one. A counter
+  # reading is only evidence when it is a delta over a window that spans
+  # the anomaly, so the window is part of the check and not an afterthought.
+
+  + requires observation window (window)       - is the observation window for (window-of)
+  + has confirmation strength   (conf-str)     - is the confirmation strength of (conf-str-of)
+
  :: provenance, which of the input documents said so ::
 
   # Every fact in this graph came from one of four document classes, and
