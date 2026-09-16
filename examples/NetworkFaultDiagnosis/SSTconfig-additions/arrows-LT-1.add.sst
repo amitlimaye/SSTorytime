@@ -1,0 +1,61 @@
+
+ # ------------------------------------------------------------------
+ # BEGIN network-fault-diagnosis arrows (LEADSTO)
+ # ------------------------------------------------------------------
+ #
+ # Fault propagation is a process, which is why it belongs in LEADSTO.
+ # The base config already carries (cause), (aff), (result) and
+ # (is prereq); those are reused rather than redefined here.
+ #
+ # Note the direction convention. Arrows are written cause to symptom,
+ # so diagnosis walks them BACKWARDS. The inverse readings are therefore
+ # the ones a diagnostic query actually uses, and they are worded to be
+ # read aloud in that direction.
+
+ :: fault propagation ::
+
+  + manifests as the symptom    (manifests)    - is a symptom produced by      (symptom-of)
+  + propagates to               (propagates)   - receives the fault from       (propag-from)
+  + degrades into               (degrades)     - degraded from                 (degraded-from)
+
+ :: triage, narrowing a vague complaint ::
+
+  # A complaint is not a symptom. "The network is slow" is a report of
+  # experience that has to be narrowed before the causal model can touch
+  # it. Narrowing is a process, so it lives in LEADSTO.
+
+  + is refined by asking        (refined-by)   - refines the complaint         (refines)
+  + narrows to                  (narrows-to)   - is a narrowing of             (narrowed-from)
+
+ :: playbook coverage as negative evidence ::
+
+  # A playbook exists because the problem was already characterizable and
+  # already has remediation. So a playbook that covers a fault and did NOT
+  # fire is evidence against that fault, and a fault no playbook covers is
+  # a prime suspect whenever a complaint arrives unexplained.
+
+  + is detected by playbook     (detected-by)  - detects the fault             (detects)
+
+ :: masking, why an expected symptom is absent ::
+
+  # Masking is the thing that makes network faults hard. A cause can be
+  # present and its usual symptom invisible, because something upstream
+  # absorbed it. A diagnostic graph that cannot say this will quietly
+  # rule out the right answer.
+
+  + is masked by                (masked-by)    - masks the symptom of          (masks)
+
+ :: discrimination, the part that narrows a hypothesis set ::
+
+  + is discriminated by         (discrim-by)   - discriminates between causes  (discriminates)
+  + is confirmed by observing   (confirmed-by) - would confirm                 (confirms)
+  + is excluded by observing    (excluded-by)  - would exclude                 (excludes)
+
+ :: remediation ::
+
+  + is mitigated by             (mitig-by)     - mitigates                     (mitigates)
+  + is resolved by              (resolved-by)  - resolves                      (resolves)
+
+ # ------------------------------------------------------------------
+ # END network-fault-diagnosis arrows (LEADSTO)
+ # ------------------------------------------------------------------

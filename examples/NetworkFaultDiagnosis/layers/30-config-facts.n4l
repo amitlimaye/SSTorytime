@@ -1,0 +1,46 @@
+##############################################################################
+#  GENERATED from rendered templates or running configs. Do not hand edit.
+#
+#  Two jobs. Record configured values so they can be diffed against design
+#  intent, and mark which fault preconditions hold in THIS fabric so the
+#  diagnostic query can prune hypotheses that are not possible here.
+##############################################################################
+
+-Fabric configuration facts
+
+ :: config, configured values ::
+
+ device: leaf01 (doc-src) source: switch configuration
+        "       (cfg-val) configured: interface mtu 9216 on fabric facing interfaces
+        "       (cfg-val) configured: forwarding profile balanced
+        "       (cfg-val) configured: hash seed left at vendor default
+
+ device: spine01 (cfg-val) configured: interface mtu 9216 on fabric facing interfaces
+        "        (cfg-val) configured: forwarding profile balanced
+        "        (cfg-val) configured: hash seed left at vendor default
+
+ :: config, divergence from design intent ::
+
+ # The interesting output of this layer. Each line is a design requirement
+ # the running config does not meet.
+
+ configured: hash seed left at vendor default (!same) intended: hash seed is set per tier and not left at the vendor default
+        "                                     (note) Divergence from the architecture document. Both tiers therefore hash identically, which is the precondition for polarisation
+        "                                     (doc-src) source: switch configuration
+
+ :: config, precondition evaluation ::
+
+ # Whether each fault is possible at all in this fabric. A fault whose
+ # precondition does not hold is not a candidate, and this is where the
+ # config and architecture documents do their real diagnostic work.
+
+ precondition: more than one equal cost path exists between the endpoints (stateinv) status: precondition holds
+ precondition: the hash seed is identical across tiers (stateinv) status: precondition holds
+ precondition: a speed change or fan in exists at this hop (stateinv) status: precondition holds
+ precondition: the entry count for this table is near the capacity stated in the asic manual (stateinv) status: precondition does not hold
+ precondition: an overlay encapsulation is configured (stateinv) status: precondition holds
+ precondition: at least one interface in the path has a smaller mtu than the endpoints (stateinv) status: precondition does not hold
+ precondition: a control plane policing profile is applied (stateinv) status: precondition holds
+
+ status: precondition does not hold (note) Marks a fault as not possible in this fabric as currently configured. Demoted rather than deleted, because the config layer can be stale and the fault model should not lose the hypothesis entirely
+ status: precondition holds (note) Does not make the fault likely. It only means the fabric is capable of exhibiting it

@@ -81,3 +81,19 @@
 
 
 
+
+ # ------------------------------------------------------------------
+ # BEGIN network-fault-diagnosis arrows (NEAR / SIMILAR)
+ # ------------------------------------------------------------------
+
+ :: symptom matching ::
+
+ co-occurs with                      (co-occurs)
+ is confusable with                  (confusable)
+ has the same drop signature as      (sm-dropsig)
+ is the same class of fault as       (sm-fault)
+ presents identically at layer 3 to  (sm-l3)
+
+ # ------------------------------------------------------------------
+ # END network-fault-diagnosis arrows (NEAR / SIMILAR)
+ # ------------------------------------------------------------------

@@ -1,0 +1,37 @@
+##############################################################################
+#  GENERATED from the architecture document. Do not hand edit.
+#  Worked example: a two tier leaf and spine fabric with an overlay.
+##############################################################################
+
+-Fabric design intent
+
+ :: fabric, topology, design intent ::
+
+ fabric: dc1 (doc-src) source: architecture document
+     "   (has-device) device: leaf01
+     "   (has-device) device: leaf02
+     "   (has-device) device: spine01
+     "   (has-device) device: spine02
+
+ device: leaf01 (has-asic) asic: model tomahawk class
+ device: leaf02 (has-asic) asic: model tomahawk class
+ device: spine01 (has-asic) asic: model tomahawk class
+ device: spine02 (has-asic) asic: model tomahawk class
+
+ :: fabric, design requirements ::
+
+ # These are what make a configured value wrong rather than merely unusual.
+ # Every one of them is a claim the architecture document makes, and every
+ # one is checkable against the config layer.
+
+ fabric: dc1 (design-req) design: jumbo frames end to end at 9216 bytes
+     "       (design-req) design: every leaf has two uplinks, one to each spine
+     "       (design-req) design: equal cost paths are used for all inter rack traffic
+     "       (design-req) design: the overlay carries all tenant traffic between racks
+     "       (design-req) design: hash seed differs between the leaf tier and the spine tier
+
+ design: jumbo frames end to end at 9216 bytes (intended) intended: interface mtu is 9216 on every fabric facing interface
+        "                                      (note) The overlay encapsulation overhead is taken from this budget, so the effective tenant payload is smaller. This arithmetic is the single most common source of confusion between the mtu and overlay fault classes
+
+ design: hash seed differs between the leaf tier and the spine tier (intended) intended: hash seed is set per tier and not left at the vendor default
+        "                                                           (note) Present specifically to prevent polarisation. If this requirement is met the polarisation hypothesis can be demoted, and if it is silently unmet it is the first thing to suspect under load

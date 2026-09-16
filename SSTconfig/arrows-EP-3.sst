@@ -282,3 +282,93 @@
  + indecipherable role (???)  - undecipherable role (xxx)
  
 
+
+ # ------------------------------------------------------------------
+ # BEGIN network-fault-diagnosis arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+
+ :: observables, what the hardware will actually tell you ::
+
+  + has observable counter      (counter)      - is a counter observing        (counter-for)
+  + has drop reason code        (drop-code)    - is a drop reason produced by  (drop-for)
+  + has hardware register       (hwreg)        - is a register exposing        (hwreg-for)
+  + has log signature           (logsig)       - is a log signature of         (logsig-of)
+
+ :: asic resources, from the programmer manual ::
+
+  + has capacity limit          (capacity)     - is the capacity limit of      (capacity-of)
+  + has table width or key      (tablekey)     - is the key format of          (tablekey-of)
+
+ :: configuration and design, the preconditions that eliminate ::
+
+  # A cause whose precondition is absent in THIS network is not a
+  # candidate. This is where the architecture document and the running
+  # config earn their place: they prune the hypothesis set.
+
+  + has config precondition     (cfg-pred)     - is a config precondition for  (cfg-pred-for)
+  + has design requirement      (design-req)   - is a design requirement of    (design-req-of)
+  + has configured value        (cfg-val)      - is the configured value of    (cfg-val-of)
+  + has intended value          (intended)     - is the intended value of      (intended-of)
+
+ :: diagnosis ::
+
+  + has diagnostic test         (has-test)     - is a diagnostic test for      (test-for)
+  + has test command            (test-cmd)     - is the command for test       (cmd-for)
+  + has expected result if true (if-true)      - is expected when true for     (if-true-for)
+  + has expected result if false (if-false)    - is expected when false for    (if-false-for)
+  + has innocent explanation    (innocent)     - is an innocent explanation of (innocent-of)
+  + has prior occurrence count  (priors)       - is the prior count for        (priors-for)
+  + has fault severity          (fault-sev)    - is the severity of fault      (fault-sev-of)
+  + has time to diagnose        (ttd)          - is the time to diagnose       (ttd-of)
+
+ :: triage ::
+
+  + has answer option           (answer)       - is an answer to               (answer-to)
+  + has effort to obtain        (effort)        - is the effort of              (effort-of)
+  + has detection threshold     (threshold)    - is the detection threshold of (threshold-of)
+  + has complaint wording       (wording)      - is wording for complaint      (wording-of)
+
+ :: counter schema, what makes telemetry guided rather than prose ::
+
+  # A check is only executable if it names a real telemetry path with a
+  # real scope and a real kind. These bind the semantic counter node to the
+  # schema entry the agent can actually query.
+
+  + has telemetry path          (tpath)        - is the telemetry path for     (tpath-for)
+  + has metric kind             (mkind)        - is the metric kind of         (mkind-of)
+  + has metric scope            (mscope)       - is the scope of metric        (mscope-of)
+
+ :: machine evaluable predicates, for a runtime with no language model ::
+
+  # The runtime agent has no LLM. It cannot read "materially above the
+  # quiet baseline" and act on it. Every check therefore carries an
+  # evaluable form: a window in seconds, an aggregation, a comparison and
+  # a numeric trigger. The prose stays for the human reviewing the graph;
+  # these fields are what the agent actually executes.
+
+  + has evaluation window seconds (winsec)     - is the window in seconds for  (winsec-of)
+  + has aggregation              (aggregate)   - is the aggregation for        (aggregate-of)
+  + has comparison rule          (cmp-rule)    - is the comparison rule for    (cmp-rule-of)
+  + has trigger condition        (trigger)     - is the trigger condition for  (trigger-of)
+
+ :: counter confirmation ::
+
+  # Counters confirm a hypothesis; they do not generate one. A counter
+  # reading is only evidence when it is a delta over a window that spans
+  # the anomaly, so the window is part of the check and not an afterthought.
+
+  + requires observation window (window)       - is the observation window for (window-of)
+  + has confirmation strength   (conf-str)     - is the confirmation strength of (conf-str-of)
+
+ :: provenance, which of the input documents said so ::
+
+  # Every fact in this graph came from one of four document classes, and
+  # a hypothesis is only as good as what it rests on. Recording this is
+  # what lets a ranked answer cite its sources instead of asserting.
+
+  + has documentation source    (doc-src)      - is the documented source of   (doc-for)
+  + has manual reference        (manual-ref)   - is the manual section for     (manual-for)
+
+ # ------------------------------------------------------------------
+ # END network-fault-diagnosis arrows (PROPERTIES)
+ # ------------------------------------------------------------------

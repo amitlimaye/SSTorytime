@@ -1,0 +1,55 @@
+##############################################################################
+#  GENERATED alongside the counter schema. Do not hand edit.
+#
+#  THE NO LANGUAGE MODEL CONTRACT
+#
+#  The runtime agent has no LLM. It cannot read "materially above the quiet
+#  baseline" and act on it. So every check in fault-model.n4l gets an
+#  evaluable twin here: window in seconds, aggregation, comparison rule and
+#  a numeric trigger.
+#
+#  The prose in the fault model is for the human reviewing the graph. These
+#  fields are what the agent executes. If a check has no entry here, the
+#  runtime must report it as NOT EVALUABLE rather than skipping it silently,
+#  because a check the agent cannot run is a hypothesis it cannot settle.
+##############################################################################
+
+-Check evaluation predicates
+
+ :: predicates, machine evaluable, runtime ::
+
+ check: tail drop delta on the congested egress queue (winsec) winsec: 300
+        "  (aggregate) aggregate: delta over window, per interface per queue
+        "  (cmp-rule) compare: against the same aggregation over an equal length quiet window
+        "  (trigger) trigger: ratio above 3.0 on at least one queue
+
+ check: transmitted byte spread across ecmp members (winsec) winsec: 300
+        "  (aggregate) aggregate: delta over window, per member interface
+        "  (cmp-rule) compare: max member against min member within the same group
+        "  (trigger) trigger: ratio above 4.0 with the minimum member below 10 percent of the maximum
+
+ check: table utilisation against the manual capacity (winsec) winsec: 0
+        "  (aggregate) aggregate: instantaneous read, per asic per resource table
+        "  (cmp-rule) compare: against the capacity for the configured forwarding profile
+        "  (trigger) trigger: utilisation above 90 percent of capacity
+
+ check: optical receive power against transceiver minimum (winsec) winsec: 0
+        "  (aggregate) aggregate: instantaneous read, per transceiver per channel
+        "  (cmp-rule) compare: against the transceiver specified minimum, at both ends of the link
+        "  (trigger) trigger: below the specified minimum at exactly one end
+
+ check: cpu queue drop delta by protocol class (winsec) winsec: 900
+        "  (aggregate) aggregate: delta over window, per protocol class
+        "  (cmp-rule) compare: against zero across the window spanning the flap
+        "  (trigger) trigger: any nonzero delta on the class carrying the flapping protocol
+
+ check: frame check sequence error delta on path links (winsec) winsec: 900
+        "  (aggregate) aggregate: delta over window, per interface on the path
+        "  (cmp-rule) compare: against zero across the window
+        "  (trigger) trigger: any nonzero delta on any link in the path
+
+ :: predicates, evaluation rules the runtime must honour ::
+
+ winsec: 0 (note) Instantaneous read. Safe to issue as a single get, because the underlying metric is a gauge rather than a free running counter
+ evaluation rule (note) For any counter whose kind says free running, a single absolute read is not evidence. The runtime must take two reads separated by the window, or subscribe and difference, and must refuse to report a verdict from one sample
+        "         (note) A check with no predicate entry is NOT EVALUABLE. Report it as such and leave the hypothesis open. Silently skipping it turns an unsettled hypothesis into an apparently excluded one

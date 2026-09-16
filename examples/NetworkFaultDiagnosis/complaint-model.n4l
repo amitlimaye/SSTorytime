@@ -1,0 +1,98 @@
+##############################################################################
+#
+#  Complaint triage: from "my network is slow" to something the causal
+#  model can reason about.
+#
+#  WHY THIS LAYER EXISTS
+#
+#  A playbook exists because someone could already characterise a problem
+#  with a set of counters, and it already carries its own remediation. So a
+#  complaint that reaches a human is, almost by selection, one the playbooks
+#  did NOT catch. That inverts the usual assumption: the absence of a
+#  matching event is not missing information, it is the strongest single
+#  piece of evidence available, and it points AWAY from everything the
+#  playbook library covers.
+#
+#  A complaint is not a symptom. It is a report of experience, and it has to
+#  be narrowed before the causal model can touch it. Narrowing is done by
+#  asking the cheapest question that most divides the hypothesis space --
+#  history taking, not measurement.
+#
+##############################################################################
+
+-Complaint triage
+
+ :: triage, complaints, vague reports ::
+
+ complaint: the network is slow (wording) wording: my network is slow
+        "                       (wording) wording: everything is sluggish today
+        "                       (wording) wording: transfers are taking forever
+        "                       (note) The most common complaint and the least informative. It is compatible with nearly every fault in the model, which is why the first move is never to form a hypothesis but to ask a question
+        "                       (refined-by) question: does it affect small requests too or only large transfers
+        "                       (refined-by) question: is it constant or does it come and go
+        "                       (refined-by) question: is it within the rack too or only between racks
+        "                       (refined-by) question: did it start suddenly or degrade over weeks
+
+ complaint: applications time out intermittently (wording) wording: things randomly fail and then work again
+        "                                        (wording) wording: we get occasional errors we cannot reproduce
+        "                                        (refined-by) question: is it constant or does it come and go
+        "                                        (refined-by) question: does it affect all endpoints or only some
+        "                                        (refined-by) question: do sessions fail to start or fail after starting
+
+ :: triage, refinement questions ::
+
+ # Ranked in the query by how many candidate faults each answer separates.
+ # Effort is recorded because a question to a human is nearly free and a
+ # measurement is not, and the cheapest adequate question should win.
+
+ question: does it affect small requests too or only large transfers (effort) effort: one question to the reporter
+        "                                                            (note) The highest value question in the model. Size dependence cleanly separates the path property faults from the rate dependent ones, which are the two families that get confused most
+        "                                                            (answer) answer: only large transfers are affected
+        "                                                            (answer) answer: small requests are affected too
+
+ answer: only large transfers are affected (narrows-to) symptom: small flows work and large transfers stall
+ answer: small requests are affected too (narrows-to) symptom: intermittent loss with no error counters incrementing
+
+ question: is it constant or does it come and go (effort) effort: one question to the reporter
+        "                                        (answer) answer: it comes and goes with a time or a job
+        "                                        (answer) answer: it is constant whenever we try
+
+ answer: it comes and goes with a time or a job (narrows-to) symptom: loss correlates with time of day or with a batch job
+        "                                       (narrows-to) symptom: loss that appears only above a traffic threshold
+ answer: it is constant whenever we try (narrows-to) symptom: forwarding works but at a fraction of line rate
+
+ question: is it within the rack too or only between racks (effort) effort: one question to the reporter, or one probe from a known host
+        "                                                  (answer) answer: only between racks
+        "                                                  (answer) answer: within the rack as well
+
+ answer: only between racks (narrows-to) symptom: connectivity works within a rack and fails between racks
+ answer: within the rack as well (narrows-to) symptom: the problem affects one device and its peers are fine
+
+ question: did it start suddenly or degrade over weeks (effort) effort: one question to the reporter
+        "                                              (note) Separates change induced faults from scale induced ones, which is the difference between reading a change log and reading a capacity table
+        "                                              (answer) answer: it degraded gradually over weeks
+        "                                              (answer) answer: it started suddenly
+
+ answer: it degraded gradually over weeks (narrows-to) symptom: the problem appeared after a scale event rather than after a change
+ answer: it started suddenly (narrows-to) symptom: behaviour changed with no corresponding change record
+
+ question: does it affect all endpoints or only some (effort) effort: one question to the reporter
+        "                                            (answer) answer: only some endpoints
+        "                                            (answer) answer: all endpoints equally
+
+ answer: only some endpoints (narrows-to) symptom: application works for some endpoints and not others
+        "                    (narrows-to) symptom: loss affects some flows persistently and others never
+ answer: all endpoints equally (narrows-to) symptom: intermittent loss with no error counters incrementing
+
+ question: do sessions fail to start or fail after starting (effort) effort: one question to the reporter
+        "                                                   (answer) answer: they start and then hang
+        "                                                   (answer) answer: they fail to establish at all
+
+ answer: they start and then hang (narrows-to) symptom: tcp session establishes then hangs
+ answer: they fail to establish at all (narrows-to) symptom: newly added prefixes or hosts are unreachable while existing ones are fine
+
+ :: triage, the negative evidence rule ::
+
+ negative evidence rule (note) For every candidate fault, ask whether a playbook covers it. A covered fault whose playbook did not fire is demoted, because that playbook exists precisely to catch it and it stayed silent. A fault no playbook covers is promoted, because an unexplained complaint is selected for exactly those
+        "                (note) Demoted, never deleted. A playbook can be scoped to the wrong devices, or its threshold can sit above what a user notices, and the gap between user perceptible and playbook threshold is a systematic blind band that complaints live in
+        "                (note) So a demotion must always be reported with its escape hatch: which playbook covers this, at what threshold, and could the complaint be below it

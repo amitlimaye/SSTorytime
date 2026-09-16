@@ -83,3 +83,30 @@
  + contains track (track) - is a track belonging to (track in)
  + collection contains (collected in) - is part of the collection (in collection)
 
+
+ # ------------------------------------------------------------------
+ # BEGIN network-fault-diagnosis arrows (CONTAINS)
+ # ------------------------------------------------------------------
+
+ :: fault taxonomy ::
+
+  + fault taxonomy has class    (has-fault)    - is a fault class in           (fault-in)
+
+ :: anomaly playbooks ::
+
+  # The playbook library is a CLOSED vocabulary, like the asic drop reason
+  # enumeration. That is what makes it a usable entry point: the set of
+  # things the agent can ever be told is finite and enumerable.
+
+  + playbook emits event        (emits)        - is emitted by playbook        (emitted-by)
+
+ :: physical and logical containment ::
+
+  + fabric contains device      (has-device)   - is a device in fabric         (device-in)
+  + device contains asic        (has-asic)     - is the asic in device         (asic-in)
+  + asic has resource table     (has-table)    - is a resource table in asic   (table-in)
+  + device has interface        (has-intf)     - is an interface on device     (intf-on)
+
+ # ------------------------------------------------------------------
+ # END network-fault-diagnosis arrows (CONTAINS)
+ # ------------------------------------------------------------------
