@@ -15,3 +15,7 @@
  # ------------------------------------------------------------------
  # END agent-intent-drift arrows (NEAR / SIMILAR)
  # ------------------------------------------------------------------
+
+ # --- keyword lexicon (NEAR) ---
+ relates to concept                (kw-rel)
+ # --- end keyword lexicon ---

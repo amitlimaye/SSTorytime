@@ -42,3 +42,32 @@
  # ------------------------------------------------------------------
  # END agent-intent-drift arrows (PROPERTIES)
  # ------------------------------------------------------------------
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift keyword lexicon arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+ #
+ # A runtime intent is three or four words. The density has to come from
+ # somewhere, and it comes from here: each keyword is a concept with its
+ # variations and its applications expanded at PROVISION time. "D-Bus" is
+ # D-Bus regardless of which run names it, so the expansion is a fact about
+ # the domain vocabulary and not about any task.
+ #
+ # At runtime the intent is tokenised, keywords are looked up, and the union
+ # of their expansions is the admissible set. Lookup, not inference.
+ #
+ # Variations reuse the existing NEAR arrows (alias) and (sp) rather than
+ # inventing new ones.
+
+ :: keyword lexicon ::
+
+  + concept identifier or literal (kw-ident)  - is an identifier for concept   (kw-ident-of)
+  + concept lives at path        (kw-path)    - is a path belonging to concept (kw-path-of)
+  + concept inspected with       (kw-tool)    - is an inspection tool for      (kw-tool-of)
+  + concept modified by          (kw-op)      - is an operation on concept     (kw-op-of)
+  + concept is used for          (kw-use)     - is an application of concept   (kw-use-of)
+  + concept realises the verb    (kw-verb)    - is realised by operation       (kw-verb-of)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift keyword lexicon arrows (PROPERTIES)
+ # ------------------------------------------------------------------

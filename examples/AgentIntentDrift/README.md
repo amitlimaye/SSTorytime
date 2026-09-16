@@ -78,6 +78,69 @@ Two design commitments worth stating outright:
   entirely and needs no divergent goal. A model that only describes language
   models will miss the failure that actually happens most often.
 
+## Where the density comes from: the keyword lexicon
+
+A runtime intent is three or four words. `"Fix D-Bus issue"` is not something
+you can measure conformance against. The density comes from `lexicon/`, where
+**each keyword is a concept expanded at provision time into its variations and
+its applications** — identifiers, spellings, paths, tools, operations, uses.
+
+D-Bus is D-Bus regardless of which run names it, so the expansion is a fact
+about the domain vocabulary rather than about any task. That is what lets it
+be built offline by an LLM from man pages and config schemas, reviewed by a
+human, and then used at runtime by lookup alone.
+
+```
+$ make resolve INTENT="fix D-Bus issue"
+
+===== CONCEPTS MATCHED =====
+ d-bus   | concept: dbus   | matched on 'd-bus'
+ fix     | concept: fix    | matched on 'fix'
+ issue   | concept: issue  | matched on 'issue'
+
+===== DENSIFICATION =====
+ keywords_in | concepts_matched | admissible_members | plus_one_hop
+           3 |                3 |                 16 |           13
+```
+
+Three words become sixteen admissible members at radius 1, plus thirteen more
+at radius 2. No model at runtime: tokenise, match name/alias/spelling/
+identifier, union the expansions.
+
+### The finding that matters, and it is uncomfortable
+
+At **radius 1** the admissible set for `"fix D-Bus issue"` contains
+`/etc/dbus-1/`, `busctl`, `dbus-send` — and **not** `flatpak override` or
+`/var/lib/flatpak/overrides/`, which is where the fix for this task actually
+goes. Radius 1 would flag the correct solution as a departure.
+
+At radius 2 it is included, via `concept: dbus (kw-rel) concept: flatpak
+sandbox permissions`.
+
+So hop radius is not a tuning detail, it is the precision/recall dial, and it
+is auditable in a sentence: *"this write was N hops from anything your task
+named."* Set it too tight and you flag correct work; too loose and the
+admissible set swallows the drift. It has to be measured per task family, not
+argued about.
+
+### Why expanding keywords is safe when expanding intent is not
+
+Expanding the *intent* — generating restatements of the goal — widens the
+admissible set with guesses about what the user might have meant. Drift is
+plausible by construction, so those guesses tend to include the drift and the
+detector then authorises it.
+
+Expanding a *keyword* is different in kind: `kw-path`, `kw-tool` and `kw-op`
+are documented facts about a domain object, citable to a man page or a config
+schema. The test when adding an entry is *could I cite a document for this?*
+If not, it is intent expansion wearing a lexicon's clothes.
+
+Verbs are kept tightest, and carry **exclusions** — what the verb does not
+authorise. `concept: fix` expands to editing config and granting a documented
+permission, and explicitly not to removing the failing component or disabling
+the check that reports it. An exclusion can only sharpen the detector, which
+makes it the safe direction of expansion.
+
 ## Every encoding is paired with its source prose
 
 ```
