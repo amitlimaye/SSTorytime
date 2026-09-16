@@ -67,11 +67,105 @@ engineer for hours — see `incidents/INC-2411`, nine of eleven hours on
 hypothesis one. Hence recall over precision, explicit `confusable` and
 `masked-by` relations, and an observation to make instead of a verdict.
 
+## Is this a reasoning engine? No — and that is the point
+
+A fair reading of this library is *an LLM's associative memory without the
+reasoning mode*. It stores typed relations and traverses them. It has no
+inference engine, no forward chaining, no constraint solver, no probabilistic
+update. Everything that looks like reasoning in `queries/` is SQL I wrote.
+
+But that is the correct division of labour here, because you already have a
+reasoner: the agent. What the agent lacks is a substrate that keeps it
+honest. Against an LLM's own associations, this graph gives four things:
+
+| | |
+| --- | --- |
+| **Citable** | every edge was written by a person from a named document, and `source:` travels with the answer |
+| **Deterministic** | same query, same answer. No sampling |
+| **Cannot fabricate** | if the edge is not there you get nothing, rather than something plausible |
+| **Computably incomplete** | `blind-spots.sql` answers "what can this system not know?" — a question you cannot put to a model |
+
+So: **the graph is the memory, the agent is the reasoner, and the graph's job
+is to bound what the agent may assert.** A hypothesis that is not in the
+graph should not reach the operator; a step in a debug script that cannot
+cite a document should not be run.
+
+## Is a guided debug script feasible with what the library provides?
+
+Yes, and it is arguably the most idiomatic thing you can build on it.
+Semantic Spacetime is a library about **stories** — paths through a graph —
+and a debug script *is* a story: complaint, hypothesis, observation, branch,
+next observation. That is a path, and paths are the one thing this database
+is actually built for.
+
+`queries/debug-script.sql` emits one. Every field in its output is a stored
+fact retrieved and ordered — nothing is inferred:
+
+```
+$ make script HYP="ecmp hash polarisation"
+
+=== STEP CLASS 0 : DESK CHECKS (no device touched) ===
+ precondition: more than one equal cost path exists between the endpoints | status: precondition holds
+ precondition: the hash seed is identical across tiers                    | status: precondition holds
+
+=== STEP CLASS 1 : PASSIVE TELEMETRY (guided by counter schema) ===
+ step        | 2
+ observation | transmitted byte spread across ecmp members
+ read_path   | interfaces interface state counters out-octets
+ how_to_read | cumulative counter, free running, meaningful only as a delta
+ at_scope    | per interface
+ over_window | the interval spanning the reported anomaly, per member interface
+ if_true     | sustained spread far beyond flow count variance, one member near idle
+ if_false    | members within normal spread of each other
+ caveat      | separates polarisation from every other congestion cause
+```
+
+Steps are ordered by cost — desk checks that touch no device, then passive
+telemetry, then active tests — and within a class the checks that are
+decisive in *both* directions come first, because those end the branch either
+way. The `read_path` comes from `layers/50-counter-schema.n4l`, which is what
+makes the telemetry **guided** rather than advisory: the agent gets a path,
+a scope and a reading rule it can execute, not a sentence to interpret.
+
+**What the library does not give you, and I had to build:** the ordering
+heuristic, the scoring, anything numeric or temporal (windows and thresholds
+are text the agent must interpret), and execution. It emits the script; it
+cannot run it.
+
+## The complaint is the entry point, and silence is the evidence
+
+A playbook exists because someone could already characterise the problem with
+counters, and it already carries remediation. **So a complaint that reaches a
+human is, by selection, one the playbooks did not catch.** That inverts the
+usual assumption: the absence of a matching event is not missing information,
+it is the strongest single signal available, and it points *away* from
+everything the playbook library covers.
+
+Hence `complaint-model.n4l`, which narrows "my network is slow" by asking the
+cheapest question that most divides the space — history taking, not
+measurement — and hence the scoring rule that **promotes** faults no playbook
+covers and **demotes** faults whose playbook stayed silent.
+
+Demoted, never eliminated. A playbook can be scoped to the wrong devices, or
+its threshold can sit above what a user notices. A user perceives a two
+second stall; the congestion playbook needs five minutes. That band is where
+complaints live, so every demotion is reported with its escape hatch: which
+playbook covers this, at what threshold, and could the complaint be below it.
+
+In the worked fabric, two faults are covered by no playbook at all —
+`mtu mismatch on a transit hop` and `cabling or patch error`. Those are the
+prime suspects for any unexplained complaint, and that ranking falls directly
+out of your own playbook library rather than being asserted by me.
+
 ## The pipeline
 
 ```
-anomaly report ──► resolve events to symptoms ──► candidate faults
-   (symbols)                                            │
+vague complaint ──► cheapest narrowing question ──► symptoms
+"my network is slow"                                    │
+                     anomaly report, if any ────────────┤
+                        (symbols)                       ▼
+                                                 candidate faults
+                                                        │
                                     prune by precondition (config)
                                     expand by confusability (recall)
                                                         │

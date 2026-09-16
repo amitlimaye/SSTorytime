@@ -37,6 +37,23 @@
   + has fault severity          (fault-sev)    - is the severity of fault      (fault-sev-of)
   + has time to diagnose        (ttd)          - is the time to diagnose       (ttd-of)
 
+ :: triage ::
+
+  + has answer option           (answer)       - is an answer to               (answer-to)
+  + has effort to obtain        (effort)        - is the effort of              (effort-of)
+  + has detection threshold     (threshold)    - is the detection threshold of (threshold-of)
+  + has complaint wording       (wording)      - is wording for complaint      (wording-of)
+
+ :: counter schema, what makes telemetry guided rather than prose ::
+
+  # A check is only executable if it names a real telemetry path with a
+  # real scope and a real kind. These bind the semantic counter node to the
+  # schema entry the agent can actually query.
+
+  + has telemetry path          (tpath)        - is the telemetry path for     (tpath-for)
+  + has metric kind             (mkind)        - is the metric kind of         (mkind-of)
+  + has metric scope            (mscope)       - is the scope of metric        (mscope-of)
+
  :: counter confirmation ::
 
   # Counters confirm a hypothesis; they do not generate one. A counter

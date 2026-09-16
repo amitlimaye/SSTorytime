@@ -171,6 +171,24 @@
   + propagates to               (propagates)   - receives the fault from       (propag-from)
   + degrades into               (degrades)     - degraded from                 (degraded-from)
 
+ :: triage, narrowing a vague complaint ::
+
+  # A complaint is not a symptom. "The network is slow" is a report of
+  # experience that has to be narrowed before the causal model can touch
+  # it. Narrowing is a process, so it lives in LEADSTO.
+
+  + is refined by asking        (refined-by)   - refines the complaint         (refines)
+  + narrows to                  (narrows-to)   - is a narrowing of             (narrowed-from)
+
+ :: playbook coverage as negative evidence ::
+
+  # A playbook exists because the problem was already characterizable and
+  # already has remediation. So a playbook that covers a fault and did NOT
+  # fire is evidence against that fault, and a fault no playbook covers is
+  # a prime suspect whenever a complaint arrives unexplained.
+
+  + is detected by playbook     (detected-by)  - detects the fault             (detects)
+
  :: masking, why an expected symptom is absent ::
 
   # Masking is the thing that makes network faults hard. A cause can be

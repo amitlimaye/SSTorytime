@@ -71,3 +71,38 @@
  playbook library (note) Coverage is a property of the playbook set, not of the causal model. A fault whose every symptom lacks an emitting playbook is invisible to the agent no matter how good its reasoning, and the agent should say so rather than silently omitting it
         "         (question) no playbook currently emits an event for asymmetric neighbour discovery, which is the primary tell for cabling and patch errors
         "         (tbd) a neighbour consistency playbook comparing discovered adjacencies against the cabling plan would close the largest gap in this library
+
+ :: playbooks, what each already detects and remediates ::
+
+ # The negative evidence map. A playbook exists because the problem was
+ # already characterisable by counters AND already has remediation, so a
+ # fault listed here is a SOLVED problem. When a complaint arrives that no
+ # playbook explained, these are the faults to look away from, and the ones
+ # absent from this list are the ones to look at.
+
+ playbook: interface congestion (detects) fault: buffer exhaustion from microbursts
+        "  (detects) fault: ecmp hash polarisation
+        "  (threshold) threshold: queue drop rate above a sustained rate over five minutes
+
+ playbook: adjacency stability (detects) fault: control plane policer discarding protocol traffic
+        "  (threshold) threshold: two or more adjacency resets within an hour
+
+ playbook: optics health (detects) fault: unidirectional link fault
+        "  (threshold) threshold: receive power below the transceiver specified minimum
+
+ playbook: resource utilisation (detects) fault: hardware table exhaustion
+        "  (threshold) threshold: utilisation above ninety percent of the profile capacity
+
+ playbook: config compliance (detects) fault: configuration drift from template
+        "  (threshold) threshold: any diff against the rendered template
+
+ playbook: reachability probe (detects) fault: overlay to underlay mapping inconsistency
+        "  (threshold) threshold: probe loss above one percent between rack pairs
+
+ # Deliberately absent, and this is the point of the layer:
+ #   fault: mtu mismatch on a transit hop     -- no playbook characterises it
+ #   fault: cabling or patch error            -- no playbook characterises it
+ # Both are therefore prime suspects whenever a complaint arrives that the
+ # playbook library did not explain.
+
+ threshold: queue drop rate above a sustained rate over five minutes (note) A user notices a stall lasting two seconds. This threshold needs five minutes. The band between what a person perceives and what a playbook fires on is where complaints live, and it is why a silent playbook demotes a hypothesis rather than eliminating it

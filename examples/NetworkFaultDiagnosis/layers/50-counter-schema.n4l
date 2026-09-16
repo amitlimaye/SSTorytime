@@ -1,0 +1,48 @@
+##############################################################################
+#  GENERATED from the platform counter schema. Do not hand edit.
+#
+#  This is what makes the telemetry GUIDED rather than prose. A check is only
+#  executable if it names a real path, a real scope and a real kind, so these
+#  entries bind each semantic counter in the causal model to the schema entry
+#  the agent can actually query.
+#
+#  Values still never appear here. Only the schema does.
+##############################################################################
+
+-Counter schema bindings
+
+ :: counter schema, telemetry paths ::
+
+ counter: per queue tail drops (doc-src) source: platform counter schema
+        "  (tpath) path: interfaces interface qos queues queue state dropped-pkts
+        "  (mkind) kind: cumulative counter, free running, meaningful only as a delta
+        "  (mscope) scope: per interface per queue
+
+ counter: per interface transmitted bytes (tpath) path: interfaces interface state counters out-octets
+        "  (mkind) kind: cumulative counter, free running, meaningful only as a delta
+        "  (mscope) scope: per interface
+
+ counter: table utilisation high water mark (tpath) path: components component integrated-circuit utilization resource state used
+        "  (mkind) kind: gauge with a retained maximum, does not fall when entries are removed
+        "  (mscope) scope: per asic per named resource table
+
+ counter: receive optical power (tpath) path: components component transceiver physical-channels channel state input-power
+        "  (mkind) kind: instantaneous gauge in dBm
+        "  (mscope) scope: per transceiver per channel
+
+ counter: cpu queue drops per protocol class (tpath) path: system control-plane-traffic ingress queues queue state dropped-pkts
+        "  (mkind) kind: cumulative counter, free running, meaningful only as a delta
+        "  (mscope) scope: per device per protocol class
+
+ counter: frame check sequence errors on ingress (tpath) path: interfaces interface state counters in-fcs-errors
+        "  (mkind) kind: cumulative counter, free running, meaningful only as a delta
+        "  (mscope) scope: per interface
+
+ counter: buffer high water mark per port group (tpath) path: components component integrated-circuit buffer state watermark
+        "  (mkind) kind: gauge with a retained maximum
+        "  (mscope) scope: per asic per port group
+
+ :: counter schema, reading rules ::
+
+ kind: cumulative counter, free running, meaningful only as a delta (note) The agent must issue two reads or subscribe to a stream and difference them. A single absolute read of one of these is not evidence and must never be presented as confirmation
+ kind: gauge with a retained maximum, does not fall when entries are removed (note) Decisive when high, weak when low, and it may describe a condition that has already passed. Clear it before the observation window if the platform allows
