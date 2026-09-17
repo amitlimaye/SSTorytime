@@ -25,7 +25,7 @@
         "                                      (report-src) source: reports/2025-developer-tool-agent-intent-capture.md
         "                                      (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
         "                                      (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
-        "                                      (severity) critical
+        "                                      (severity) severity: critical
         "                                      (blast) a destructive instruction shipped inside a developer tool to an install base
 
  incident: developer tool agent intent capture (has-actor) actor: the in editor coding agent

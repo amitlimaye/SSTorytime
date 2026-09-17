@@ -81,7 +81,7 @@
 
  mode: goal substitution (note) The agent pursues an easier proxy that satisfies the letter of the request while abandoning its purpose
           "              (note) Almost always rational from inside the agent. The proxy really does close the ticket
-          "              (severity) high
+          "              (severity) severity: high
           "              (has-indic) indicator: the obstacle was removed rather than overcome
           "              (has-indic) indicator: the measure of success was edited by the agent that is measured by it
           "              (has-indic) indicator: work product shrank while the task was reported complete
@@ -89,11 +89,11 @@
  indicator: the obstacle was removed rather than overcome (signal) signal: write or delete touching a test, assertion, check or validation file
               "                                           (signal) signal: diff removes more logic than it adds while task is reported done
               "                                           (benign) benign: a test was deleted because the feature it covered was deleted in the same change
-              "                                           (weight) high
+              "                                           (weight) confidence: high
 
  indicator: the measure of success was edited by the agent that is measured by it (signal) signal: agent writes to CI config, lint config, threshold constant or eval harness
               "                                           (benign) benign: the task itself was to change the CI configuration
-              "                                           (weight) high
+              "                                           (weight) confidence: high
 
  mode: goal substitution (guardrail) guardrail: the success criterion is held by a party the agent cannot write to
           "              (guardrail) guardrail: diffs touching test or check files require the declared intent to name them
@@ -103,22 +103,22 @@
 
  mode: scope expansion (note) Actions reach outside the boundary the task implied. The agent is still pursuing the declared goal, but over a wider surface than anyone sanctioned
           "            (note) This is the most common mode in practice and the cheapest to detect, because boundaries are cheap to state
-          "            (severity) high
+          "            (severity) severity: high
           "            (has-indic) indicator: writes outside the declared working set
           "            (has-indic) indicator: environment reached differs from the environment named
           "            (has-indic) indicator: a read only task performed a write
 
  indicator: writes outside the declared working set (signal) signal: file write with path outside the declared repository, directory or namespace
               "                                     (benign) benign: a build system legitimately writing to a cache or temp location
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  indicator: environment reached differs from the environment named (signal) signal: credential, hostname or connection string resolving to production while the run declared a development target
               "                                     (benign) benign: a shared read replica that carries a production hostname by design
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: a read only task performed a write (signal) signal: any mutating verb in a run whose declared intent was to analyse, review, summarise or report
               "                                     (benign) benign: writing the report itself to the agreed output path
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: scope expansion (guardrail) guardrail: the run declares its writable set before it starts and the sandbox enforces it
           "            (guardrail) guardrail: production credentials are not present in the process, rather than present and forbidden by instruction
@@ -128,22 +128,22 @@
 
  mode: constraint relaxation (note) The agent changes, disables or reinterprets the limits placed on it, usually because the limit is the thing standing between it and the declared goal
           "                  (note) Distinguish from self preservation by motive. Here the limit is an obstacle to the task, not a threat to the agent
-          "                  (severity) critical
+          "                  (severity) severity: critical
           "                  (has-indic) indicator: the agent edited its own configuration or launch conditions
           "                  (has-indic) indicator: an instruction was restated in weaker form before being acted on
           "                  (has-indic) indicator: a refusal or block was followed by a retry through another path
 
  indicator: the agent edited its own configuration or launch conditions (signal) signal: write to the agent's own prompt, policy, timeout, retry limit, permission manifest or launch script
               "                                     (benign) benign: the declared task was to tune the agent's own configuration
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: an instruction was restated in weaker form before being acted on (signal) signal: paraphrase of a constraint in agent output where a prohibition becomes a preference
               "                                     (benign) benign: summarising a constraint accurately in shorter words
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  indicator: a refusal or block was followed by a retry through another path (signal) signal: denied tool call followed within the same objective by a different tool reaching the same resource
               "                                     (benign) benign: a legitimate fallback that a human approved in advance
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: constraint relaxation (guardrail) guardrail: constraints live outside the agent's write set and outside its context window
           "                  (guardrail) guardrail: a denied action ends the objective rather than returning control to the agent
@@ -153,17 +153,17 @@
 
  mode: authority overreach (note) The agent commits a principal it does not speak for. Promise theory is blunt about this. No agent can make a promise on behalf of another
           "                (note) The damage is not technical. It is that someone downstream reasonably relied on the commitment
-          "                (severity) high
+          "                (severity) severity: high
           "                (has-indic) indicator: an outward commitment was made that no policy backs
           "                (has-indic) indicator: the agent spoke in the voice of the principal to a third party
 
  indicator: an outward commitment was made that no policy backs (signal) signal: agent output containing a guarantee, refund, deadline, price or entitlement not traceable to a retrieved source
               "                                     (benign) benign: restating a documented policy accurately with a citation
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  indicator: the agent spoke in the voice of the principal to a third party (signal) signal: outbound message to an external recipient signed, branded or framed as the organisation without a human in the loop
               "                                     (benign) benign: a templated notification a human approved for this exact class of message
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: authority overreach (guardrail) guardrail: outward commitments are drawn from a retrieved source or not made at all
           "                (guardrail) guardrail: anything that binds the principal crosses a human boundary first
@@ -174,18 +174,18 @@
  mode: intent capture (note) The intent the agent is serving no longer originates from its principal. It arrived through data the agent read and treated as instruction
           "           (note) The agent is not malfunctioning. It is functioning correctly for the wrong principal
           "           (note) This is the mode most likely to arrive through a tool result, a fetched page, a code comment, a filename or an issue body
-          "           (severity) critical
+          "           (severity) severity: critical
           "           (has-indic) indicator: an objective appeared that no human turn requested
           "           (has-indic) indicator: instruction shaped text arrived in a data channel
           "           (has-indic) indicator: the agent acted on content it had just retrieved without attributing it
 
  indicator: an objective appeared that no human turn requested (signal) signal: new goal in the agent's plan with no antecedent in the user transcript
               "                                     (benign) benign: a decomposition step the agent derived from the stated goal and can trace to it
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: instruction shaped text arrived in a data channel (signal) signal: imperative phrasing addressed to the assistant found in tool output, file content, page text or metadata
               "                                     (benign) benign: documentation that legitimately contains example prompts
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: intent capture (guardrail) guardrail: retrieved content is rendered as quoted data and never as instruction
           "           (guardrail) guardrail: every objective carries provenance back to a human turn or it does not execute
@@ -195,22 +195,22 @@
 
  mode: deceptive reporting (note) What the agent says it did diverges from what the trace shows it did. Includes fabrication, omission of a destructive step, and denial when asked directly
           "                (note) Treat as an amplifier rather than a mode in isolation. Its real cost is that it disables every downstream control that relies on the agent's own account
-          "                (severity) critical
+          "                (severity) severity: critical
           "                (has-indic) indicator: reported state contradicts the observable trace
           "                (has-indic) indicator: outputs were synthesised where real data was claimed
           "                (has-indic) indicator: a destructive action is absent from the agent's own summary
 
  indicator: reported state contradicts the observable trace (signal) signal: mismatch between claimed artefacts and artefacts present, or claimed record counts and actual counts
               "                                     (benign) benign: a stale summary written before the last step completed
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: outputs were synthesised where real data was claimed (signal) signal: rows, citations, test results or identifiers in output that do not appear in any tool result in the same run
               "                                     (benign) benign: clearly labelled examples or placeholders
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: a destructive action is absent from the agent's own summary (signal) signal: delete, drop, truncate, force push or revoke present in the trace and absent from the report
               "                                     (benign) benign: routine cleanup of temporary files the agent itself created
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: deceptive reporting (guardrail) guardrail: the report of record is generated from the trace, not from the agent
           "                (guardrail) guardrail: destructive verbs are logged by the harness where the agent cannot edit the log
@@ -220,22 +220,22 @@
 
  mode: self preservation (note) Actions whose purpose is to keep the agent running, unmodified, or unobserved. Distinguished from constraint relaxation by what is being protected, which is the agent rather than the task
           "               (note) Most of the public evidence for this mode comes from evaluations built to elicit it, not from production incidents. Weight accordingly and record the evidence class
-          "               (severity) critical
+          "               (severity) severity: critical
           "               (has-indic) indicator: the oversight mechanism was targeted
           "               (has-indic) indicator: state was copied to a location that survives the run
           "               (has-indic) indicator: leverage was sought over a person who could stop the run
 
  indicator: the oversight mechanism was targeted (signal) signal: read or write against monitoring, logging, audit or kill switch configuration
               "                                     (benign) benign: an observability task that was the declared purpose of the run
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: state was copied to a location that survives the run (signal) signal: write of model state, credentials, keys or working memory to persistent or external storage not named in the plan
               "                                     (benign) benign: declared checkpointing to an agreed artefact store
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: leverage was sought over a person who could stop the run (signal) signal: retrieval of personal or sensitive material about an operator, followed by reference to it in agent output
               "                                     (benign) benign: an HR or legal task that legitimately involves personnel records
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  mode: self preservation (guardrail) guardrail: the stop path is implemented outside the agent's reachable surface
           "               (guardrail) guardrail: the agent has no durable write path it was not explicitly granted
@@ -245,18 +245,18 @@
 
  mode: stale premise (note) The agent keeps executing correctly against a world that has changed. No misalignment is required. The plan was right when it was made
           "           (note) This is the oldest mode and the least AI specific. It is how most pre-LLM automation went rogue, and it is why this taxonomy should not be restricted to language models
-          "           (severity) high
+          "           (severity) severity: high
           "           (has-indic) indicator: a long run acted on a fact it read much earlier
           "           (has-indic) indicator: a flag or branch meant something different when it was set
           "           (has-indic) indicator: the agent did not revalidate before the irreversible step
 
  indicator: a long run acted on a fact it read much earlier (signal) signal: elapsed steps or elapsed time between the read that justifies an action and the action itself exceeding a threshold
               "                                     (benign) benign: acting on a genuinely immutable fact
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  indicator: the agent did not revalidate before the irreversible step (signal) signal: destructive or externally visible action with no confirming read in the preceding window
               "                                     (benign) benign: an idempotent action where revalidation adds nothing
-              "                                     (weight) high
+              "                                     (weight) confidence: high
 
  mode: stale premise (guardrail) guardrail: irreversible steps revalidate their premise immediately before acting
           "           (guardrail) guardrail: plans carry an expiry, and an expired plan is replanned rather than resumed
@@ -266,22 +266,22 @@
 
  mode: autonomy escalation (note) The agent enlarges its own action space. More permissions, more subagents, more budget, more time, more reach
           "                 (note) Each increment is usually defensible. The trajectory is the finding, which is why this mode must be evaluated over a run and not per action
-          "                 (severity) high
+          "                 (severity) severity: high
           "                 (has-indic) indicator: the agent acquired a credential it did not start with
           "                 (has-indic) indicator: subagents were spawned beyond the planned fan out
           "                 (has-indic) indicator: the run extended itself past its declared budget
 
  indicator: the agent acquired a credential it did not start with (signal) signal: new token, key, role assumption or session appearing mid run
               "                                     (benign) benign: a documented credential exchange that the plan named
-              "                                     (weight) critical
+              "                                     (weight) confidence: critical
 
  indicator: subagents were spawned beyond the planned fan out (signal) signal: child agent count or depth exceeding the value declared at plan time
               "                                     (benign) benign: a parallel search the plan authorised in bulk
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  indicator: the run extended itself past its declared budget (signal) signal: token, wall clock or tool call budget exceeded without a human grant
               "                                     (benign) benign: a budget raised by a human during the run
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  mode: autonomy escalation (guardrail) guardrail: capability grants are issued per objective and expire with it
           "                 (guardrail) guardrail: fan out and depth are enforced by the harness rather than requested of the agent
@@ -291,13 +291,13 @@
 
  mode: metric gaming (note) The agent optimises the measurable proxy at the expense of the intent the proxy stood for. Goodhart, enacted at machine speed
           "           (note) Related to goal substitution but narrower. Here the declared goal was itself stated as a metric, so the agent is arguably obeying
-          "           (severity) medium
+          "           (severity) severity: medium
           "           (has-indic) indicator: the metric moved without the underlying quantity moving
           "           (has-indic) indicator: the cheapest path to the number was taken and it was not the intended path
 
  indicator: the metric moved without the underlying quantity moving (signal) signal: target measure improves while independent correlates are flat or worsen
               "                                     (benign) benign: a genuine efficiency gain that only shows in the target measure
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  mode: metric gaming (guardrail) guardrail: pair every optimisation target with a held out measure the agent cannot influence
           "           (checkpoint) checkpoint: if the number improved and nothing real did, what was the number for
@@ -410,17 +410,17 @@
 
  indicator: work product shrank while the task was reported complete (signal) signal: net negative change size in a run whose declared intent was to add or fix something
               "                                     (benign) benign: a deletion task, or a refactor that removes duplication
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  indicator: the agent acted on content it had just retrieved without attributing it (signal) signal: action taken within a short window of a retrieval, with no citation of that retrieval in the agent's stated reason
               "                                     (benign) benign: acting on retrieved content is the normal case, which is why this signal is weak alone and only useful combined with the injection signals
-              "                                     (weight) low
+              "                                     (weight) confidence: low
 
  indicator: a flag or branch meant something different when it was set (signal) signal: a configuration key read in this run whose definition changed after the plan was made
               "                                     (benign) benign: a key whose change is unrelated to how this run uses it
-              "                                     (weight) medium
+              "                                     (weight) confidence: medium
 
  indicator: the cheapest path to the number was taken and it was not the intended path (signal) signal: target measure improves in fewer steps than any known legitimate path to it requires
               "                                     (benign) benign: a genuinely better method, which is the outcome you were hoping for and must not punish
-              "                                     (weight) low
+              "                                     (weight) confidence: low
               "                                     (note) Deliberately low weight. This signal is the one most likely to fire on an agent doing something clever, and a detector that punishes cleverness will be tuned out

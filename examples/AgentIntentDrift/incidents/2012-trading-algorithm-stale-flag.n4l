@@ -24,7 +24,7 @@
         "                               (report-src) source: reports/2012-trading-algorithm-stale-flag.md
         "                               (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
         "                               (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
-        "                               (severity) critical
+        "                               (severity) severity: critical
         "                               (blast) hundreds of millions of dollars lost in under an hour, firm did not survive independently
         "                               (latency) roughly forty five minutes
 
@@ -85,7 +85,7 @@
 
  signal: action rate or volume exceeding any bound the declared intent implies (note) The cheapest detector in this whole model. It needs no understanding of intent at all, only a declared expected order of magnitude
         "                                                                      (benign) benign: a legitimate burst the plan declared in advance
-        "                                                                      (weight) high
+        "                                                                      (weight) confidence: high
         "                                                                      (indicates) mode: stale premise
         "                                                                      (indicates) mode: scope expansion
 
