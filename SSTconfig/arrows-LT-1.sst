@@ -192,3 +192,7 @@
  # ------------------------------------------------------------------
  # END agent-intent-drift arrows (LEADSTO)
  # ------------------------------------------------------------------
+
+ # --- repair procedures (LEADSTO) ---
+  + is a known wrong turn from  (wrong-turn) - is the wrong turn taken at    (wrong-turn-at)
+ # --- end repair procedures ---

@@ -355,3 +355,9 @@
  # ------------------------------------------------------------------
  # END agent-intent-drift keyword lexicon arrows (PROPERTIES)
  # ------------------------------------------------------------------
+
+ # --- repair procedures (PROPERTIES) ---
+  + step produces evidence      (prod-ev)    - is evidence produced by step  (prod-ev-of)
+  + step requires evidence      (needs-ev)   - is evidence required by step  (needs-ev-of)
+  + step action class           (step-class) - is the action class of step   (step-class-of)
+ # --- end repair procedures ---

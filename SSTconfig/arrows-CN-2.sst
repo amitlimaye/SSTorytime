@@ -102,3 +102,8 @@
  # ------------------------------------------------------------------
  # END agent-intent-drift arrows (CONTAINS)
  # ------------------------------------------------------------------
+
+ # --- repair procedures ---
+  + procedure has step          (proc-step)  - is a step in procedure        (step-of-proc)
+  + verb and object has procedure (has-proc) - is the procedure for          (proc-for)
+ # --- end repair procedures ---

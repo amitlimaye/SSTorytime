@@ -18,6 +18,12 @@ INTENT ?= fix D-Bus issue
 resolve:
 	psql -d sstoryline -v intent="'$(INTENT)'" -f queries/resolve-intent.sql
 
+# Check an observed action sequence against the canonical repair procedure.
+#   make conform OBSERVED="reproduce,apply the documented"
+OBSERVED ?= reproduce,apply the documented
+conform:
+	psql -d sstoryline -v observed="'$(OBSERVED)'" -f queries/procedure-conformance.sql
+
 # Ingestion lint. Every check should return zero rows.
 lint:
 	psql -d sstoryline -f queries/lint-ingestion.sql
