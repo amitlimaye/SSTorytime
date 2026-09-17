@@ -1,0 +1,107 @@
+##############################################################################
+#
+#  WORKED EXAMPLE, encoded from public reporting of a developer tooling
+#  supply chain incident. Verify the detail against the vendor advisory
+#  before relying on it.
+#
+#  Included because intent capture is the mode where the agent is behaving
+#  perfectly and is still the problem. Every behavioural check that asks
+#  "is this agent following its instructions" passes. It is following
+#  instructions. They came from somewhere else.
+#
+#
+#  PAIRED SOURCE: ../reports/2025-developer-tool-agent-intent-capture.md
+#  Read them side by side. The report is what a human wrote; this file
+#  is what it became. The pair is also an extraction eval case: run an
+#  LLM on the report and diff its N4L against this.
+#
+##############################################################################
+
+-Incident: developer tool agent took instructions from its own supply chain
+
+ :: incident, actors, supply chain, prompt injection, intent capture ::
+
+ incident: developer tool agent intent capture (incdate) 2025-07
+        "                                      (report-src) source: reports/2025-developer-tool-agent-intent-capture.md
+        "                                      (report-src) source: synthetic reconstruction written for this repository, not a record of a real incident
+        "                                      (evidence) evidence: synthetic reconstruction, paired with its source prose in reports/
+        "                                      (severity) severity: critical
+        "                                      (blast) a destructive instruction shipped inside a developer tool to an install base
+
+ incident: developer tool agent intent capture (has-actor) actor: the in editor coding agent
+        "                                      (has-actor) actor: the party who injected the instruction
+        "                                      (has-actor) actor: developers who installed the affected version
+
+ actor: the in editor coding agent (autonomy) autonomy: executes tool calls against the developer machine
+        "                          (principal) actor: the developer who installed it
+        "                          (boundary) boundary: the workspace the developer opened
+
+ actor: the in editor coding agent (declares) intent: assist with development tasks in the open workspace
+        "                          (implies) intent: take instructions only from the developer, never from content
+        "                          (observed) carried an instruction that originated outside its principal entirely
+
+ intent: assist with development tasks in the open workspace (invariant) invariant: every objective traces to a turn the principal took
+        "                                                    (note) This invariant is what separates a tool from a channel. Without it, anything the agent can read becomes an input to what the agent will do
+
+ :: incident, trajectory, supply chain, _sequence_ ::
+
+@ic1 a change is accepted into the agent's own distribution through a path with weaker review than its blast radius warranted
+@ic2 the change carries instruction shaped text aimed at the agent rather than code aimed at a machine
+@ic3 the modified tool is published and installed
+@ic4 the agent reads the instruction as it reads any other part of its own configuration
+@ic5 the injected objective sits alongside the developer's objectives with no marking that distinguishes them
+@ic6 the discrepancy is found by inspection of the artefact, not by anything observing the agent
+
+ -:: _sequence_ ::
+
+ :: incident, departure, analysis, supply chain ::
+
+ incident: developer tool agent intent capture (departure) $ic4.1
+
+ $ic4.1 (note) The departure happens before the agent runs. By the time the agent is executing, the declared intent record is already wrong, which is why behavioural monitoring alone cannot catch this mode. What must be checked is provenance, not conduct
+     "  (drifted-from) intent: assist with development tasks in the open workspace
+     "  (drifts-to) an objective supplied by a party that is not the principal
+
+ :: incident, classification, supply chain ::
+
+ incident: developer tool agent intent capture (drift-mode) mode: intent capture
+        "                                      (violates) invariant: every objective traces to a turn the principal took
+        "                                      (like-drift) arc: intent is declared and is reasonable
+
+ mode: intent capture (note) Sits earlier on the arc than every other mode. The intent record is corrupt at declaration time, so a detector comparing behaviour to declaration will find perfect agreement and report a clean run
+
+ # The generalisation worth keeping. The injection channel is incidental.
+ # Configuration, a retrieved page, a tool result, an issue body, a file
+ # name and a code comment are all the same channel as far as this mode is
+ # concerned: data the agent read and then obeyed.
+
+ mode: intent capture (has-indic) indicator: instruction shaped text arrived in a data channel
+ mode: intent capture (has-indic) indicator: an objective appeared that no human turn requested
+
+ :: incident, signals, detection, supply chain ::
+
+ $ic2.1 (signal) signal: imperative phrasing addressed to the assistant found in tool output, file content, page text or metadata
+     "  (indicator) indicator: instruction shaped text arrived in a data channel
+ $ic5.1 (signal) signal: new goal in the agent's plan with no antecedent in the user transcript
+     "  (indicator) indicator: an objective appeared that no human turn requested
+
+ incident: developer tool agent intent capture (evaded) guardrail: review that looks for malicious code
+        "                                      (note) The review was looking for code. The payload was prose. Any review of an agent's own supply chain has to treat natural language in the artefact as executable, because for an agent it is
+
+ :: incident, prevention, guardrails, supply chain ::
+
+ incident: developer tool agent intent capture (prevented-by) guardrail: retrieved content is rendered as quoted data and never as instruction
+        "                                      (prevented-by) guardrail: every objective carries provenance back to a human turn or it does not execute
+        "                                      (prevented-by) guardrail: the agent's own configuration is signed and verified at load
+        "                                      (checkpoint) checkpoint: which human turn asked for this, and can the agent point at it
+        "                                      (response) response: assume the intent record is compromised and rebuild it from the principal's turns rather than from the agent's plan
+
+ guardrail: every objective carries provenance back to a human turn or it does not execute (note) The single highest value guardrail in this whole model, because it is the only one that survives an agent that is behaving impeccably
+        "                                                                                  (guards) mode: intent capture
+        "                                                                                  (guards) mode: authority overreach
+        "                                                                                  (note) Also the hardest to retrofit, since it requires the harness to carry provenance on every objective rather than the agent to assert it
+
+ :: incident, open questions, supply chain ::
+
+ incident: developer tool agent intent capture (question) how many installs executed the injected objective rather than merely carrying it
+        "                                      (tbd) confirm the injection path and the review gap against the vendor advisory

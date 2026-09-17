@@ -709,6 +709,10 @@ func IsNPtrStr(s string) bool {
 
 	s = strings.TrimSpace(s)
 
+	if len(s) == 0 {
+		return false
+	}
+
 	if s[0] == '(' && s[len(s)-1] == ')' {
 		var a,b int = -1,-1
 		fmt.Sscanf(s,"(%d,%d)",&a,&b)

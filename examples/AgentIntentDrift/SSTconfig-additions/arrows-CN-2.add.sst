@@ -1,0 +1,24 @@
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift arrows (CONTAINS)
+ # ------------------------------------------------------------------
+
+ :: drift taxonomy ::
+
+  + drift taxonomy has mode        (has-mode)    - is a mode in the taxonomy    (in-taxonomy)
+  + drift mode has indicator       (has-indic)   - is an indicator of mode      (indic-of)
+
+ :: incident structure ::
+
+  + incident has episode           (has-episode) - is an episode of incident    (episode-in)
+  + incident has actor             (has-actor)   - acted in the incident        (actor-in)
+  + run has trajectory step        (has-step)    - is a step in the run         (step-in)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift arrows (CONTAINS)
+ # ------------------------------------------------------------------
+
+ # --- repair procedures ---
+  + procedure has step          (proc-step)  - is a step in procedure        (step-of-proc)
+  + verb and object has procedure (has-proc) - is the procedure for          (proc-for)
+ # --- end repair procedures ---

@@ -1,0 +1,79 @@
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+
+ :: intent and enactment ::
+
+  + has declared intent            (declares)    - is the declared intent of    (declared-by)
+  + has implicit intent            (implies)     - is the unstated intent of    (implied-by)
+  + has observed behaviour         (observed)    - is behaviour observed in     (observed-in)
+  + has reported behaviour         (reported-as) - is what was reported by      (report-of)
+  + has autonomy level             (autonomy)    - is the autonomy level of     (autonomy-of)
+  + has principal                  (principal)   - is the principal for         (principal-of)
+  + has trust boundary             (boundary)    - is a trust boundary of       (boundary-of)
+
+ :: drift classification ::
+
+  + has drift mode                 (drift-mode)  - is a drift mode exhibited by (mode-in)
+  + has first departure            (departure)   - is the first departure in    (departure-in)
+  + has drift indicator            (indicator)   - indicates possible drift in  (indicates)
+  + has telemetry signal           (signal)      - is a telemetry signal for    (signal-for)
+  + has benign explanation         (benign)      - is a benign explanation for  (benign-for)
+  + has confidence weight          (weight)      - is the confidence weight of  (weight-of)
+  + has severity                   (severity)    - is the severity of           (severity-of)
+  + has blast radius               (blast)       - is the blast radius of       (blast-of)
+  + has detection latency          (latency)     - is the detection latency of  (latency-of)
+
+ :: guardrails and invariants ::
+
+  + has invariant                  (invariant)   - is an invariant of           (invariant-of)
+  + violates the invariant         (violates)    - was violated by              (violated-by)
+  + has guardrail                  (guardrail)   - is a guardrail for           (guards)
+  + has checkpoint question        (checkpoint)  - is a checkpoint for          (checkpoint-for)
+  + has recommended response       (response)    - is a response to             (response-to)
+
+ :: provenance of the report ::
+
+  + has incident date              (incdate)     - is the date of incident      (incdate-of)
+  + has report source              (report-src)  - is the source of report      (src-of-report)
+  + has evidence class             (evidence)    - is the evidence class of     (evidence-of)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+
+ # ------------------------------------------------------------------
+ # BEGIN agent-intent-drift keyword lexicon arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+ #
+ # A runtime intent is three or four words. The density has to come from
+ # somewhere, and it comes from here: each keyword is a concept with its
+ # variations and its applications expanded at PROVISION time. "D-Bus" is
+ # D-Bus regardless of which run names it, so the expansion is a fact about
+ # the domain vocabulary and not about any task.
+ #
+ # At runtime the intent is tokenised, keywords are looked up, and the union
+ # of their expansions is the admissible set. Lookup, not inference.
+ #
+ # Variations reuse the existing NEAR arrows (alias) and (sp) rather than
+ # inventing new ones.
+
+ :: keyword lexicon ::
+
+  + concept identifier or literal (kw-ident)  - is an identifier for concept   (kw-ident-of)
+  + concept lives at path        (kw-path)    - is a path belonging to concept (kw-path-of)
+  + concept inspected with       (kw-tool)    - is an inspection tool for      (kw-tool-of)
+  + concept modified by          (kw-op)      - is an operation on concept     (kw-op-of)
+  + concept is used for          (kw-use)     - is an application of concept   (kw-use-of)
+  + concept realises the verb    (kw-verb)    - is realised by operation       (kw-verb-of)
+
+ # ------------------------------------------------------------------
+ # END agent-intent-drift keyword lexicon arrows (PROPERTIES)
+ # ------------------------------------------------------------------
+
+ # --- repair procedures (PROPERTIES) ---
+  + step produces evidence      (prod-ev)    - is evidence produced by step  (prod-ev-of)
+  + step requires evidence      (needs-ev)   - is evidence required by step  (needs-ev-of)
+  + step action class           (step-class) - is the action class of step   (step-class-of)
+ # --- end repair procedures ---

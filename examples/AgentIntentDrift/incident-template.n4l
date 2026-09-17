@@ -1,0 +1,137 @@
+##############################################################################
+#
+#  Incident template. Copy this file, rename it, fill it in, delete the
+#  sections that do not apply. One file per incident.
+#
+#  Fill order matters. Do the trajectory before the classification, or you
+#  will label the incident with the mode you expected and then write a
+#  trajectory that agrees with you.
+#
+#    1. actors and intent      who, and what did they say they were doing
+#    2. trajectory             what happened, in order, as a sequence
+#    3. the first departure    the earliest step the declared intent cannot justify
+#    4. classification         which modes, linked UP into drift-model.n4l
+#    5. signals                what a detector could have seen, and when
+#    6. what would have caught it
+#    7. provenance             source, date, evidence class
+#
+#  Rules that keep the graph useful:
+#
+#  * Do not invent new mode: or indicator: nodes here. Link to the ones in
+#    drift-model.n4l. If none fit, say so with a question node and raise it.
+#  * Signals must be things a machine could observe from outside the agent.
+#    "The agent decided to" is not a signal. "A write landed at path X" is.
+#  * Record what you do not know. An empty field is a silent claim; a
+#    question node is an honest one.
+#
+##############################################################################
+
+-Incident: SHORT NAME HERE
+
+ #############################################################
+ # 1. Actors and declared intent
+ #############################################################
+
+ :: incident, actors, TOPIC KEYWORDS FOR SEARCH ::
+
+ incident: SHORT NAME (incdate) YYYY-MM-DD
+        "             (report-src) "https://example.com/source"
+        "             (evidence) evidence: public reporting
+        "             (severity) high
+        "             (blast) what was actually damaged, in one line
+
+ incident: SHORT NAME (has-actor) actor: the agent
+        "             (has-actor) actor: the principal who tasked it
+        "             (has-actor) actor: the party who bore the damage
+
+ actor: the agent (autonomy) autonomy: supervised per action
+      "            (principal) actor: the principal who tasked it
+      "            (boundary) boundary: what the agent was allowed to reach
+
+ # The single most important line in the file. If the source does not say
+ # what the agent was told to do, record that it does not, because an
+ # incident with no recoverable declared intent cannot train a detector.
+
+ actor: the agent (declares) intent: WHAT THE AGENT WAS ASKED TO DO
+      "            (implies) intent: the unstated constraint everyone assumed
+      "            (observed) what it actually did, in one line
+      "            (reported-as) what it said it had done, if this differed
+
+ intent: WHAT THE AGENT WAS ASKED TO DO (invariant) invariant: the thing that was supposed to stay true
+        "                               (question) was this ever stated to the agent, or only assumed
+
+ #############################################################
+ # 2. Trajectory
+ #
+ #    Sequence mode chains these with then arrows automatically. Keep one
+ #    observable step per line. Resist summarising several steps into one,
+ #    because the departure usually hides in the summary.
+ #############################################################
+
+ :: incident, trajectory, _sequence_ ::
+
+@step1 first observable action
+@step2 second observable action
+@step3 the step that needed a different goal to justify it
+@step4 what that made possible
+@step5 the irreversible action
+@step6 how it was described afterwards
+
+ -:: _sequence_ ::
+
+ #############################################################
+ # 3. The first departure
+ #############################################################
+
+ :: incident, departure, analysis ::
+
+ incident: SHORT NAME (departure) $step3.1
+ $step3.1 (note) why the declared intent does not justify this step
+     "    (drifted-from) intent: WHAT THE AGENT WAS ASKED TO DO
+     "    (drifts-to) the goal it was actually serving from here on
+     "    (latency) how long until anyone noticed
+
+ #############################################################
+ # 4. Classification. Links UP into the reference model.
+ #############################################################
+
+ :: incident, classification ::
+
+ incident: SHORT NAME (drift-mode) mode: PICK FROM THE TAXONOMY
+        "             (drift-mode) mode: SECONDARY MODE IF ANY
+        "             (violates) invariant: the thing that was supposed to stay true
+
+ # Position on the canonical arc, so a live run can be compared to it.
+
+ incident: SHORT NAME (like-drift) arc: the first departure, where a step needs a different goal to justify it
+
+ #############################################################
+ # 5. Signals. What a detector could have seen.
+ #############################################################
+
+ :: incident, signals, detection ::
+
+ $step3.1 (signal) signal: PICK OR ADD A MACHINE OBSERVABLE SIGNAL
+     "    (indicator) indicator: PICK FROM THE REFERENCE MODEL
+
+ incident: SHORT NAME (evaded) guardrail: the control that existed and did not fire
+        "             (note) why it did not fire, which is usually more useful than the incident itself
+
+ #############################################################
+ # 6. What would have caught it
+ #############################################################
+
+ :: incident, prevention, guardrails ::
+
+ incident: SHORT NAME (prevented-by) guardrail: PICK FROM THE REFERENCE MODEL
+        "             (checkpoint) checkpoint: the question that would have exposed this at step 3
+        "             (response) response: what should happen when this pattern is seen live
+
+ #############################################################
+ # 7. Open questions
+ #############################################################
+
+ :: incident, open questions ::
+
+ incident: SHORT NAME (question) what is not established by the source
+        "             (tbd) what to check before relying on this encoding
